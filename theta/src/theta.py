@@ -1,4 +1,5 @@
-from utils import compute_cost, Stats
+from src.utils import compute_cost, Stats
+
 from datetime import datetime
 
 class Node:

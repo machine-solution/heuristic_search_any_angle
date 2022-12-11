@@ -1,4 +1,3 @@
-from math import sqrt
 
 # rectangle (n x m), n >= m > 0
 def simple_intersect_cells(n, m):

@@ -1,6 +1,7 @@
-from utils import compute_cost, Stats
+from src.utils import compute_cost, Stats
+from src.theta import Node, make_path
+
 from datetime import datetime
-from theta import Node, make_path
 
 class LazyNode(Node):
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, lazy_parent = None, true_node = False):
