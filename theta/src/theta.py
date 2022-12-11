@@ -1,4 +1,4 @@
-from src.utils import compute_cost, Stats
+from .utils import compute_cost, Stats
 
 from datetime import datetime
 
@@ -132,10 +132,6 @@ def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, sea
     start.parent = start
     ast.add_to_open(start)
     
-    print("start: ", start.i, start.j)
-        
-    print("goal: ", goal_i, goal_j)
-    
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
         if curr is None:
@@ -178,10 +174,6 @@ def theta_multy_choose(grid_map, start_i, start_j, goal_i, goal_j, heuristic_fun
     ast.add_to_open(start)
     steps = 0
     nodes_created = 0
-    
-    print("start: ", start.i, start.j)
-        
-    print("goal: ", goal_i, goal_j)
     
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()

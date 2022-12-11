@@ -1,5 +1,5 @@
-from src.utils import compute_cost, Stats
-from src.theta import Node, make_path
+from .utils import compute_cost, Stats
+from .theta import Node, make_path
 
 from datetime import datetime
 
@@ -59,10 +59,6 @@ def lazy_theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None
     start.apply_heuristic(heuristic_func, goal_i, goal_j, w)
     start.parent = start
     ast.add_to_open(start)
-    
-    print("start: ", start.i, start.j)
-        
-    print("goal: ", goal_i, goal_j)
     
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
