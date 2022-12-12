@@ -1,4 +1,4 @@
-from utils import vect_product, scalar_product
+from utils import vect_product, scalar_product, intersect_cells
 
 
 class Map:
@@ -166,38 +166,17 @@ class Map:
         if abs(i2 - i1) + abs(j2 - j1) == 1:
             return self._ortogonal_move_is_correct(i1, j1, i2, j2)
 
-        vect_product_sign = []  # a matrix of size (|i2 - i1| + 1) * (|j2 - j1| + 1)
-        step_i = (i2 > i1) * 2 - 1
-        step_j = (j2 > j1) * 2 - 1
-        for i in range(i1, i2 + step_i, step_i):
-            vect_product_sign.append([])
-            for j in range(j1, j2 + step_j, step_j):
-                cur_vect_product = vect_product(i2 - i1, j2 - j1, i - i1, j - j1)
-                vect_product_sign[-1].append(1 if cur_vect_product > 0
-                                             else -1 if cur_vect_product < 0
-                                             else 0)
-
-        # checks if there are the internal node with a pair of diagonal
-        # obstacles on the direction.
-        for i in range(i1, i2 + step_i, step_i):
-            for j in range(j1, j2 + step_j, step_j):
-                if (i, j) != (i1, j1) and (i, j) != (i2, j2) and \
-                        vect_product_sign[abs(i - i1)][abs(j - j1)] == 0:
-                    if self._diagonal_obstacles(i, j):
-                        return False
-
-        # checks if there is an interior of some obstacle on our direction
-        shift_i = (step_i - 1) // 2  # 0 if step_i == 1, -1 if step_i == -1
-        shift_j = (step_j - 1) // 2  # 0 if step_j == 1, -1 if step_j == -1
-        for i in range(i1 + shift_i, i2 + shift_i, step_i):
-            for j in range(j1 + shift_j, j2 + shift_j, step_j):
-                if self.traversable(i, j):
-                    continue
-                vp_signs = set()
-                for node in self._nodes_of_cell(i, j):
-                    vp_signs.add(vect_product_sign[abs(node[0] - i1)][abs(node[1] - j1)])
-                if (1 in vp_signs) and (-1 in vp_signs):
-                    return False
+        for cell in intersect_cells(i1, j1, i2, j2):
+            cell = (cell[0], cell[1])
+            if self.traversable(*cell):
+                continue
+            vect_prod_signs = set()
+            for node in self._nodes_of_cell(*cell):
+                vp = vect_product(node[0] - i1, node[1] - j1, i2 - i1, j2 - j1)
+                vect_prod_signs.add(1 if vp > 0 else
+                                    -1 if vp < 0 else 0)
+            if (1 in vect_prod_signs) and (-1 in vect_prod_signs):
+                return False
         return True
 
     def get_neighbors(self, i, j, k):
