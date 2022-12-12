@@ -86,9 +86,7 @@ class SearchTreePQSReexp(SearchTreePQS): #SearchTree with reexpansion which uses
         self._closed = set()
         self._best = dict()
         
-    def __len__(self):
-        return len(self._open) + len(self._closed) + len(self._best)
-    
+
     '''
     Adding a node to the search-tree (i.e. to OPEN) if f-value was decreased
     It's may be a duplicate, it is norm for this type of tree
@@ -96,6 +94,13 @@ class SearchTreePQSReexp(SearchTreePQS): #SearchTree with reexpansion which uses
     def add_to_open(self, item):
         if (self._best.get(item) is None) or (self._best.get(item) > item.g):
             heappush(self._open, (item.priority(), item))
-            self._best[item] = item.g
+            if item.true_node:
+                self._best[item] = item.g
         self._closed.discard(item) # trying to remove without any exceptions
+    
 
+    def get_best_node_from_open(self):
+        if not self.open_is_empty():
+            bestf, best = heappop(self._open)
+            return best
+        return None
