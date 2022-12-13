@@ -1,4 +1,4 @@
-from src.utils import compute_cost, Stats
+from .utils import compute_cost, Stats
 
 from datetime import datetime
 
@@ -9,6 +9,7 @@ class Node:
         self.parent = parent
         self.g = g
         self.h = h
+        self.true_node = True
         if f is None:
             self.f = self.g + h
         else:
@@ -61,7 +62,6 @@ def make_path(goal):
     Creates a path by tracing parent pointers from the goal node to the start node
     It also returns path's length.
     '''
-
     length = goal.g
     current = goal
     path = []
@@ -132,10 +132,6 @@ def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, sea
     start.parent = start
     ast.add_to_open(start)
     
-    print("start: ", start.i, start.j)
-        
-    print("goal: ", goal_i, goal_j)
-    
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
         if curr is None:
@@ -145,7 +141,7 @@ def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, sea
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
-            stats.path_length = make_path(curr)[1] # statistic
+            stats.way_length = make_path(curr)[1] # statistic
             return  (True, curr, stats, ast.OPEN, ast.CLOSED)
         
         # expanding curr
@@ -159,7 +155,7 @@ def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, sea
         stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
         
     stats.runtime = datetime.now() - start_time # statistic
-    stats.path_length = 0 # statistic
+    stats.way_length = 0 # statistic
     return (False, None, stats, ast.OPEN, ast.CLOSED)
 
 
@@ -179,10 +175,6 @@ def theta_multy_choose(grid_map, start_i, start_j, goal_i, goal_j, heuristic_fun
     steps = 0
     nodes_created = 0
     
-    print("start: ", start.i, start.j)
-        
-    print("goal: ", goal_i, goal_j)
-    
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
         if curr is None:
@@ -192,7 +184,7 @@ def theta_multy_choose(grid_map, start_i, start_j, goal_i, goal_j, heuristic_fun
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
-            stats.path_length = make_path(curr)[1] # statistic
+            stats.way_length = make_path(curr)[1] # statistic
             return  (True, curr, stats, ast.OPEN, ast.CLOSED)
         
         # expanding curr
@@ -205,5 +197,5 @@ def theta_multy_choose(grid_map, start_i, start_j, goal_i, goal_j, heuristic_fun
         stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
         
     stats.runtime = datetime.now() - start_time # statistic
-    stats.path_length = 0 # statistic
+    stats.way_length = 0 # statistic
     return (False, None, stats, ast.OPEN, ast.CLOSED)

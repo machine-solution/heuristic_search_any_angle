@@ -1,5 +1,5 @@
-from src.utils import compute_cost, Stats
-from src.theta import Node, make_path
+from .utils import compute_cost, Stats
+from .theta import Node, make_path
 
 from datetime import datetime
 
@@ -23,7 +23,9 @@ class LazyNode(Node):
         if self.parent is None:
             return
         
-        if grid_map.visible(self.i, self.j, self.lazy_parent.i, self.lazy_parent.j):
+        if grid_map.visible(self.i, self.j, self.parent.i, self.parent.j):
+            pass
+        else:
             self.parent = self.lazy_parent
         
         self.g = self.parent.g + compute_cost(self.i, self.j, self.parent.i, self.parent.j)
@@ -33,7 +35,7 @@ class LazyNode(Node):
 
 def getSuccessor(node, i, j, grid_map, goal_i, goal_j, heuristic_func, w):
     suc = LazyNode(i, j, g = node.parent.g + compute_cost(node.parent.i, node.parent.j, i, j),
-                    parent = node, lazy_parent = node.parent, true_node = False)
+                    parent = node.parent, lazy_parent = node, true_node = False)
     suc.apply_heuristic(heuristic_func, goal_i, goal_j, w)
     return suc
 
@@ -60,16 +62,13 @@ def lazy_theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None
     start.parent = start
     ast.add_to_open(start)
     
-    print("start: ", start.i, start.j)
-        
-    print("goal: ", goal_i, goal_j)
-    
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
         if curr is None:
             break
         elif not curr.true_node:
             curr.recount_g(grid_map)
+            curr.apply_heuristic(heuristic_func, goal_i, goal_j, w) # h may be changed with changing parent
             ast.add_to_open(curr) 
             # to do this code easier we want add this node to open and not check 
             # if it is really best
@@ -79,7 +78,7 @@ def lazy_theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
-            stats.path_length = make_path(curr)[1] # statistic
+            stats.way_length = make_path(curr)[1] # statistic
             return  (True, curr, stats, ast.OPEN, ast.CLOSED)
         
         # expanding curr
@@ -93,5 +92,5 @@ def lazy_theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None
         stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
         
     stats.runtime = datetime.now() - start_time # statistic
-    stats.path_length = 0 # statistic
+    stats.way_length = 0 # statistic
     return (False, None, stats, ast.OPEN, ast.CLOSED)
