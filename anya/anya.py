@@ -40,6 +40,13 @@ class Node:
     def __lt__(self, other):
         return self.f_value < other.f_value
 
+    def __hash__(self):
+        return hash((self.interval, self.row, self.root, self.g_value))
+
+    def __eq__(self, other):
+        return (self.interval, self.row, self.root, self.g_value) == \
+               (other.interval, other.row, other.root, other.g_value)
+
 
 def calculate_f_value(interval: tp.Tuple[Fraction, Fraction], row: int, root: tp.Tuple[int, int],
                       root_dist: float, target: tp.Tuple[int, int]) -> float:
@@ -70,41 +77,57 @@ def calculate_f_value(interval: tp.Tuple[Fraction, Fraction], row: int, root: tp
 def generate_start_successors(grid: Map, s: tp.Tuple[int, int], target: tp.Tuple[int, int]) -> tp.List[Node]:
     # construct a maximal half-closed interval I1 containing all points observable and to the left of s
     l = s[1]
-    while grid.is_traversible(s[0], l) and not grid.is_between_obstacles(s[0], l):
+    while grid.visible(s[0], s[1], s[0], l) and l >= 0:
         l -= 1
+    l += 1
 
     I1 = (l, s[1], s[0])  # (l, r, row)
 
     # construct a maximal half-closed interval I2 containing all points observable and to the right of s
     r = s[1]
-    while grid.is_traversible(s[0], r) and not grid.is_between_obstacles(s[0], r):
+    while grid.visible(s[0], s[1], s[0], r) and r <= grid.width:
         r += 1
+    r -= 1
 
     I2 = (s[1], r, s[0])  # (l, r, row)
 
     # construct a maximal closed interval I3 containing all points observable and from the row above s
     if s[0] < grid.height:
-        l = s[1]
-        while grid.get_cell(s[0], l - 1) == 0:
-            l -= 1
-        r = s[1]
-        while grid.get_cell(s[0], r) == 0:
-            r += 1
+        l = 0
+        while l < grid.width and not grid.visible(s[0], s[1], s[0] + 1, l):
+            l += 1
 
-        I3 = (l, r, s[0] + 1)  # (l, r, row)
+        if not grid.visible(s[0], s[1], s[0] + 1, l):
+            I3 = None
+        else:
+            r = l
+            while r < grid.width and grid.visible(s[0], s[1], s[0] + 1, r):
+                r += 1
+
+            if not grid.visible(s[0], s[1], s[0] + 1, r):
+                r -= 1
+
+            I3 = (l, r, s[0] + 1)  # (l, r, row)
     else:
         I3 = None
 
     # construct a maximal closed interval I4 containing all points observable and from the row below s
     if s[0] > 0:
-        l = s[1]
-        while grid.get_cell(s[0] - 1, l - 1) == 0:
-            l -= 1
-        r = s[1]
-        while grid.get_cell(s[0] - 1, r) == 0:
-            r += 1
+        l = 0
+        while l < grid.width and not grid.visible(s[0], s[1], s[0] - 1, l):
+            l += 1
 
-        I4 = (l, r, s[0] - 1)  # (l, r, row)
+        if not grid.visible(s[0], s[1], s[0] - 1, l):
+            I4 = None
+        else:
+            r = l
+            while r < grid.width and grid.visible(s[0], s[1], s[0] - 1, r):
+                r += 1
+
+            if not grid.visible(s[0], s[1], s[0] - 1, r):
+                r -= 1
+
+            I4 = (l, r, s[0] - 1)  # (l, r, row)
     else:
         I4 = None
     
@@ -119,7 +142,7 @@ def generate_start_successors(grid: Map, s: tp.Tuple[int, int], target: tp.Tuple
     # construct successors
     result = []
     for (l_, r_, row) in intervals:
-        # print("start succ", (l_, r_), row, s)
+        print("start succ", (l_, r_), row, s)
         result.append(Node((l_, r_), row, s, g_value=0, f_value=euclidean_distance(s, target)))
 
     return result
@@ -134,7 +157,8 @@ def generate_flat_successors(grid: Map, p: tp.Tuple[int, Fraction], r: tp.Tuple[
         q_col = floor(p[1])
 
     while (q_col < grid.width or col_dir == -1) and (q_col > 0 or col_dir == 1) and \
-            not grid.is_between_obstacles(p[0], q_col) and (q_col == p[1] or not grid.is_corner_point(p[0], q_col)):
+            not grid.is_between_obstacles(p[0], q_col) and (q_col == p[1] or not grid.is_corner_point(p[0], q_col)) \
+            and grid.is_traversable_edge(p[0], q_col, col_dir):
         q_col += col_dir
 
     interval = (min(Fraction(q_col), p[1]), max(Fraction(q_col), p[1]))
@@ -227,7 +251,9 @@ def generate_observable_cone_successors(grid: Map, interval: tp.Tuple[Fraction, 
                                         target: tp.Tuple[int, int]) -> tp.List[Node]:
     row_dir = 1 if root[0] < row else -1
 
-    if row + row_dir < 0 or row + row_dir > grid.height:
+    if row + row_dir < 0 or row + row_dir > grid.height or \
+            (interval[0].denominator == 1 and grid.is_between_obstacles(row, interval[0].numerator)) or \
+            (interval[1].denominator == 1 and grid.is_between_obstacles(row, interval[1].numerator)):
         return []
 
     l = root[1] + (interval[0] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
@@ -243,23 +269,13 @@ def generate_observable_cone_successors(grid: Map, interval: tp.Tuple[Fraction, 
             xr += 1
     else:
         xr = ceil(interval[1])
-        while xr > r and grid.get_cell(row - (row_dir == -1), xr - 1) == 0:
-            xr -= 1
-
-        if xr > r:
+        if grid.get_cell(row - (row_dir == -1), xr - 1) != 0:
             return []
-        else:
-            xr = r + 1
 
     if l >= interval[0]:
         xl = floor(interval[0])
-        while xl < l and grid.get_cell(row - (row_dir == -1), xl) == 0:
-            xl += 1
-
-        if xl < l:
+        if grid.get_cell(row - (row_dir == -1), xl) != 0:
             return []
-        else:
-            xl = l - 1
     else:
         xl = ceil(interval[0])
         while xl > l and grid.get_cell(row - (row_dir == -1), xl - 1) == 0:
@@ -385,6 +401,10 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
         col_dir: tp.Literal[-1, 1] = 1 if p[1] > node.root[1] else -1
         successors += generate_flat_successors(grid, p, node.root, col_dir, node.g_value, target)
 
+        for x in successors:
+            print("obs succ", x.row, x.interval, x.root, x.is_empty())
+        sz = len(successors)
+
         # generate non-observable cone successors if p is a turning point
         is_turning_point, row_dir, col_dir = turning_point_check(grid, p, node.root)
         if is_turning_point:
@@ -392,15 +412,18 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
             successors += generate_non_observable_cone_successors(grid, node.row, p[1].numerator,
                                                                   node.root, row_dir, col_dir, node.g_value, target)
 
+        for x in successors[sz:]:
+            print("non-obs succ", x.row, x.interval, x.root, x.is_empty(), x.g_value, x.f_value)
+
     else:
         a: tp.Tuple[int, Fraction] = (node.row, node.interval[0])
         b: tp.Tuple[int, Fraction] = (node.row, node.interval[1])
 
         successors += generate_observable_cone_successors(grid, node.interval, node.row, node.root, node.g_value, target)
 
-        # for x in successors:
-        #    print("obs succ", x.row, x.interval, x.root, x.is_empty())
-        # sz = len(successors)
+        for x in successors:
+            print("obs succ", x.row, x.interval, x.root, x.is_empty())
+        sz = len(successors)
 
         # generate non-observable successors if a is a turning point
         is_turning_point, row_dir, col_dir = turning_point_check(grid, a, node.root)
@@ -420,8 +443,8 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
             successors += generate_non_observable_cone_successors(grid, b[0], b[1].numerator, node.root,
                                                                   row_dir, col_dir, node.g_value, target)
 
-        # for x in successors[sz:]:
-        #    print("non-obs succ", x.row, x.interval, x.root, x.is_empty(), x.g_value, x.f_value)
+        for x in successors[sz:]:
+            print("non-obs succ", x.row, x.interval, x.root, x.is_empty(), x.g_value, x.f_value)
 
     return successors
 
@@ -430,7 +453,8 @@ def get_path(target: tp.Tuple[int, int], last_node: Node) -> tp.List[tp.Tuple[in
     result = [target, last_node.root]
     while last_node.parent is not None:
         last_node = last_node.parent
-        result.append(last_node.root)
+        if last_node.root != result[-1]:
+            result.append(last_node.root)
     result.pop()
     result.reverse()
     return result
@@ -447,10 +471,11 @@ def anya(grid: Map, source: tp.Tuple[int, int],
     open_: tp.List[Node] = [start_node]
     heapify(open_)
     root_history: tp.Dict[tp.Tuple[int, int], float] = defaultdict(lambda: INF)
+    put_in_open: tp.Set[Node] = set()
 
     while len(open_) > 0:
         cur = heappop(open_)
-        # print(cur.root, cur.interval, cur.row, cur.g_value, cur.f_value)
+        print(cur.root, cur.interval, cur.row, cur.g_value, cur.f_value)
 
         if cur.contains_point(target):
             # path found
@@ -461,11 +486,12 @@ def anya(grid: Map, source: tp.Tuple[int, int],
                 continue
 
             old_g_value = root_history[succ.root]
-            if old_g_value < succ.g_value:
+            if old_g_value < succ.g_value or succ in put_in_open:
                 continue
             succ.parent = cur
             root_history[succ.root] = succ.g_value
             heappush(open_, succ)
+            put_in_open.add(succ)
 
     # path not found
     return -1, []

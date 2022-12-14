@@ -74,7 +74,13 @@ class Map:
         return result
 
     def is_traversible(self, i: int, j: int) -> bool:
-        return any(self._cells_near_point(i, j))
+        return any([x == 0 for x in self._cells_near_point(i, j)])
+
+    def is_traversable_edge(self, row: int, col: int, dir: tp.Literal[-1, 1]) -> bool:
+        if dir == 1:
+            return self.get_cell(row, col) == 0 or self.get_cell(row - 1, col) == 0
+        else:
+            return self.get_cell(row, col - 1) == 0 or self.get_cell(row - 1, col - 1) == 0
 
     def is_between_obstacles(self, i: int, j: int) -> bool:
         if self.get_cell(i - 1, j - 1) and self.get_cell(i, j):
