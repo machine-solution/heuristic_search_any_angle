@@ -18,6 +18,7 @@ class Node:
         self.is_start = is_start
         self.f_value = f_value
         self.bounds: tp.Tuple[bool, bool] = (True, True)
+        self.parent: tp.Optional["Node"] = None
         if self.root[0] == self.row and self.root[1] == self.interval[0]:
             self.bounds = (False, True)
         if self.root[0] == self.row and self.root[1] == self.interval[1]:
@@ -55,9 +56,12 @@ def calculate_f_value(interval: tp.Tuple[Fraction, Fraction], row: int, root: tp
         else:
             x = interval[0]
 
+        # print("cone f", interval, row, root)
         return root_dist + euclidean_distance(root, (row, x)) + euclidean_distance((row, x), target)
     elif root[0] == row:
         x = interval[0] if abs(interval[0] - root[1]) < abs(interval[1] - root[1]) else interval[1]
+        # print("flat f", interval, row, root, root_dist, euclidean_distance(root, (row, x)),
+        # euclidean_distance((row, x), target))
         return root_dist + euclidean_distance(root, (row, x)) + euclidean_distance((row, x), target)
     else:
         assert False, "Not reachable"
@@ -115,6 +119,7 @@ def generate_start_successors(grid: Map, s: tp.Tuple[int, int], target: tp.Tuple
     # construct successors
     result = []
     for (l_, r_, row) in intervals:
+        # print("start succ", (l_, r_), row, s)
         result.append(Node((l_, r_), row, s, g_value=0, f_value=euclidean_distance(s, target)))
 
     return result
@@ -134,13 +139,13 @@ def generate_flat_successors(grid: Map, p: tp.Tuple[int, Fraction], r: tp.Tuple[
 
     interval = (min(Fraction(q_col), p[1]), max(Fraction(q_col), p[1]))
     if r[0] == p[0]:
-        return [Node(interval, r[0], r, g_value=r_dist, f_value=calculate_f_value(interval, r[0], r, r_dist, target))]
+        return [Node(interval, p[0], r, g_value=r_dist, f_value=calculate_f_value(interval, p[0], r, r_dist, target))]
     else:
         assert p[1].denominator == 1
         root = (p[0], p[1].numerator)
         root_dist = r_dist + euclidean_distance(r, p)
-        return [Node(interval, r[0], root, g_value=root_dist,
-                     f_value=calculate_f_value(interval, r[0], root, root_dist, target))]
+        return [Node(interval, p[0], root, g_value=root_dist,
+                     f_value=calculate_f_value(interval, p[0], root, root_dist, target))]
 
 
 def generate_non_observable_cone_successors(grid: Map, row: int, a: int, root: tp.Tuple[int, int],
@@ -204,12 +209,15 @@ def generate_non_observable_cone_successors(grid: Map, row: int, a: int, root: t
                 q -= 1
 
         I_max = (min(p[1], Fraction(q)), max(p[1], Fraction(q)), row + row_dir)
+        # print("I_max", I_max)
 
     successors = []
     for (l, r, row) in split_interval_at_corner_points(grid, I_max):
         g_value = root_dist + dist
         successors.append(Node((l, r), row, new_root, g_value,
                                f_value=calculate_f_value((l, r), row, new_root, g_value, target)))
+
+        # print("non-obs-succs", (l, r), row, new_root)
 
     return successors
 
@@ -218,8 +226,12 @@ def generate_observable_cone_successors(grid: Map, interval: tp.Tuple[Fraction, 
                                         root: tp.Tuple[int, int], root_dist: float,
                                         target: tp.Tuple[int, int]) -> tp.List[Node]:
     row_dir = 1 if root[0] < row else -1
-    l = interval[0] + (root[1] - interval[0]) / (root[0] - row)
-    r = interval[1] + (root[1] - interval[1]) / (root[0] - row)
+
+    if row + row_dir < 0 or row + row_dir > grid.height:
+        return []
+
+    l = root[1] + (interval[0] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
+    r = root[1] + (interval[1] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
     I_max: tp.Tuple[Fraction, Fraction, int]
 
     xr: int
@@ -254,7 +266,6 @@ def generate_observable_cone_successors(grid: Map, interval: tp.Tuple[Fraction, 
             xl -= 1
 
     I_max = (max(l, Fraction(xl)), min(r, Fraction(xr)), row + row_dir)
-    print(l, r, xl, xr, I_max)
 
     successors = []
     for (l, r, row) in split_interval_at_corner_points(grid, I_max):
@@ -359,7 +370,7 @@ def turning_point_check(grid: Map, p1: tp.Tuple[int, Fraction],
 
 def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp.List[Node]:
     if node.is_start:
-        return generate_start_successors(grid, (node.interval[0].numerator, node.interval[1].numerator), target)
+        return generate_start_successors(grid, (node.row, node.interval[1].numerator), target)
 
     successors = []
 
@@ -387,13 +398,14 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
 
         successors += generate_observable_cone_successors(grid, node.interval, node.row, node.root, node.g_value, target)
 
-        for x in successors:
-            print("obs succ", x.row, x.interval, x.root, x.is_empty())
-        sz = len(successors)
+        # for x in successors:
+        #    print("obs succ", x.row, x.interval, x.root, x.is_empty())
+        # sz = len(successors)
 
         # generate non-observable successors if a is a turning point
         is_turning_point, row_dir, col_dir = turning_point_check(grid, a, node.root)
         if is_turning_point:
+            # print("dir", node.root, a, row_dir, col_dir)
             successors += generate_flat_successors(grid, a, node.root, col_dir, node.g_value, target)
             assert a[1].denominator == 1
             successors += generate_non_observable_cone_successors(grid, a[0], a[1].numerator, node.root,
@@ -402,21 +414,33 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
         # generate non-observable successors if b is a turning point
         is_turning_point, row_dir, col_dir = turning_point_check(grid, b, node.root)
         if is_turning_point:
+            # print("dir", node.root, b, row_dir, col_dir)
             successors += generate_flat_successors(grid, b, node.root, col_dir, node.g_value, target)
             assert b[1].denominator == 1
             successors += generate_non_observable_cone_successors(grid, b[0], b[1].numerator, node.root,
                                                                   row_dir, col_dir, node.g_value, target)
 
-        for x in successors[sz:]:
-            print("non-obs succ", x.row, x.interval, x.root, x.is_empty())
+        # for x in successors[sz:]:
+        #    print("non-obs succ", x.row, x.interval, x.root, x.is_empty(), x.g_value, x.f_value)
 
     return successors
+
+
+def get_path(target: tp.Tuple[int, int], last_node: Node) -> tp.List[tp.Tuple[int, int]]:
+    result = [target, last_node.root]
+    while last_node.parent is not None:
+        last_node = last_node.parent
+        result.append(last_node.root)
+    result.pop()
+    result.reverse()
+    return result
 
 
 INF = 10 ** 9
 
 
-def anya(grid: Map, source: tp.Tuple[int, int], target: tp.Tuple[int, int]) -> float:
+def anya(grid: Map, source: tp.Tuple[int, int],
+         target: tp.Tuple[int, int]) -> tp.Tuple[float, tp.List[tp.Tuple[int, int]]]:
     start_node = Node((Fraction(source[1]), Fraction(source[1])), source[0], (-1, -1),
                       g_value=0, f_value=euclidean_distance(source, target), is_start=True)
 
@@ -426,11 +450,11 @@ def anya(grid: Map, source: tp.Tuple[int, int], target: tp.Tuple[int, int]) -> f
 
     while len(open_) > 0:
         cur = heappop(open_)
-        print(cur.root, cur.interval, cur.row)
+        # print(cur.root, cur.interval, cur.row, cur.g_value, cur.f_value)
 
         if cur.contains_point(target):
             # path found
-            return cur.g_value + euclidean_distance(cur.root, target)
+            return cur.g_value + euclidean_distance(cur.root, target), get_path(target, cur)
 
         for succ in generate_successors(grid, cur, target):
             if succ.is_empty():
@@ -439,8 +463,9 @@ def anya(grid: Map, source: tp.Tuple[int, int], target: tp.Tuple[int, int]) -> f
             old_g_value = root_history[succ.root]
             if old_g_value < succ.g_value:
                 continue
+            succ.parent = cur
             root_history[succ.root] = succ.g_value
             heappush(open_, succ)
 
     # path not found
-    return -1
+    return -1, []
