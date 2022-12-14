@@ -114,23 +114,25 @@ class Map:
         '''
         return (0 <= j <= self._width) and (0 <= i <= self._height)
     
-
     def traversable(self, i, j):
         '''
         Check if the cell is not an obstacle.
         '''
         return self.cell_in_bounds(i, j) and (not self._cells[i][j])
-    
-    def cells_by_delta(self, di, dj):
-        if di == 1 and dj == 0:
-            return [[0, 0], [0, -1]]
-        if di == -1 and dj == 0:
-            return [[-1, 0], [-1, -1]]
-        if di == 0 and dj == 1:
-            return [[0, 0], [-1, 0]]
-        if di == 0 and dj == -1:
-            return [[0, -1], [-1, -1]]
 
+    def not_traversable(self, i, j):
+        '''
+        Check if the cell is not an obstacle.
+        '''
+        return self.cell_in_bounds(i, j) and (self._cells[i][j])
+
+    def get_blocked_cells(self, i, j):
+        cells = []
+        delta = [[0, 0], [-1, 0], [0, -1], [-1, -1]]
+        for d in delta:
+            if self.not_traversable(i + d[0], j + d[1]):
+                cells.append((i + d[0], j + d[1]))
+        return cells
 
     def get_neighbors(self, i, j, k = 8):
         '''

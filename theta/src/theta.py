@@ -149,8 +149,7 @@ def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, sea
         successors = getSuccessors(curr, grid_map, goal_i, goal_j, heuristic_func, w, p, k)
         
         for node in successors:
-            if not ast.was_expanded(node):
-                ast.add_to_open(node)
+            ast.add_to_open(node)
                 
         stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
         
