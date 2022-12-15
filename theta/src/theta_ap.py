@@ -118,7 +118,7 @@ def updateBounds(node, start_i, start_j, grid_map, search_tree):
         if applyR:
             node.ub = 0
     
-    sucs = grid_map.get_neighbors(node.i, node.j, k=4)
+    sucs = grid_map.get_neighbors(node.i, node.j, k=8)
     for s in sucs:
         tree_s = search_tree.get_if_expanded(NodeAP(s[0], s[1]))
         point_s = NodeAP(s[0], s[1])
@@ -136,7 +136,7 @@ def updateBounds(node, start_i, start_j, grid_map, search_tree):
 
 def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, search_tree):
     updateBounds(node, start_i, start_j, grid_map, search_tree)
-    sucs = grid_map.get_neighbors(node.i, node.j, k=4)
+    sucs = grid_map.get_neighbors(node.i, node.j, k=8)
     point_start = NodeAP(start_i, start_j)
     nodes = []
     for suc in sucs:

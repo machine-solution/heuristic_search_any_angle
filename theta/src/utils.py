@@ -48,7 +48,7 @@ def theta_heuristic(node, goal_i, goal_j):
 
 
 def weighted_heuristic(node, goal_i, goal_j):
-    a = 0.5
+    a = 0.9
     
     return a * euclidian_distance(node, goal_i, goal_j) +  (1 - a) * theta_heuristic(node, goal_i, goal_j)
 
