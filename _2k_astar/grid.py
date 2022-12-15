@@ -1,4 +1,4 @@
-from utils import vect_product, scalar_product, intersect_cells
+from .utils import vect_product, scalar_product, intersect_cells
 
 
 class Map:
