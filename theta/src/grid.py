@@ -219,11 +219,9 @@ class Map:
         cells = intersect_cells(i1, j1, i2, j2)
         for cell in cells:
             if not self.traversable(cell[0], cell[1]):
-#                print("invisible : (", i1, ",", j1, ") and (", i2, ",", j2, ")")
                 return False
-#        print("  visible : (", i1, ",", j1, ") and (", i2, ",", j2, ")")
 
-        points = intersect_points(i1, i2, j1, j2)
+        points = intersect_points(i1, j1, i2, j2)
         for point in points:
             if not self.passable_point(point[0], point[1]):
                 return False
