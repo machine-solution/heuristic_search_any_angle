@@ -1,5 +1,5 @@
-from utils import compute_cost, Stats
-from grid import Map, Node
+from .utils import compute_cost, Stats
+from .grid import Map, Node
 import time
 
 
