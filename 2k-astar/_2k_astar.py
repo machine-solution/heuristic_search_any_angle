@@ -181,12 +181,13 @@ def canonical_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=N
     return path_found, goal_node, stats, ast.OPEN, ast.CLOSED
 
 
-def path_is_canonical(grid_map, goal_node):
+def path_is_canonical(grid_map, goal_node, k):
     node = goal_node
     prev_number = node.number_of_move
     node = node.parent
-    while node.number_of_move:
-        numbers_delta = abs(node.number_of_move - prev_number)
+    while node and node.number_of_move:
+        numbers_delta = min(abs(node.number_of_move - prev_number),
+                            2**k - abs(node.number_of_move - prev_number))
         if not numbers_delta:
             node = node.parent
             continue
