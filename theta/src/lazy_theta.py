@@ -2,6 +2,7 @@ from .utils import compute_cost, Stats
 from .theta import Node, make_path
 
 from datetime import datetime
+import math
 
 class LazyNode(Node):
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, lazy_parent = None, true_node = False):
@@ -16,6 +17,7 @@ class LazyNode(Node):
             self.f = self.g + h
         else:
             self.f = f  
+        self.tie = math.inf
     
     # recount true g-value using a parent
     # recount true f-value using true g-value as well        

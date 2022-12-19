@@ -1,6 +1,7 @@
 from .utils import compute_cost, Stats
 
 from datetime import datetime
+import math
 
 class Node:
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None):
@@ -14,9 +15,15 @@ class Node:
             self.f = self.g + h
         else:
             self.f = f  
+        self.tie = math.inf
             
-    def apply_heuristic(self, heuristic_func, goal_i, goal_j, w):
-        self.h = heuristic_func(self, goal_i, goal_j) * w
+    def apply_heuristic(self, heuristic_func, goal_i, goal_j, w=1):
+        h = heuristic_func(self, goal_i, goal_j) * w
+        if type(h) == tuple:
+            self.h = h[0]
+            self.tie = h[1]
+        else:
+            self.h = h
         self.f = self.g + self.h
 
     
@@ -36,7 +43,7 @@ class Node:
     
     # this function defines order of taking nodes from OPEN
     def priority(self):
-        return self.f, -self.g
+        return self.f, self.tie, -self.g
 
     def __lt__(self, other):
         return (self.i, self.j) < (other.i, other.j)
@@ -149,8 +156,7 @@ def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, sea
         successors = getSuccessors(curr, grid_map, goal_i, goal_j, heuristic_func, w, p, k)
         
         for node in successors:
-            if not ast.was_expanded(node):
-                ast.add_to_open(node)
+            ast.add_to_open(node)
                 
         stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
         
