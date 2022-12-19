@@ -7,10 +7,11 @@ from math import pi
 import math
 
 class NodeAP(Node):
-    def __init__(self, i, j, g = 0, h = 0, f = None, parent = None):
+    def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, prev = None):
         self.i = i
         self.j = j
         self.parent = parent
+        self.prev = prev
         self.g = g
         self.h = h
         self.true_node = True
@@ -37,7 +38,7 @@ def make_path(goal):
     return path[::-1], length
 
 
-def updateBounds(node, start_i, start_j, grid_map, search_tree):
+def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = True):
     node.lb = -pi
     node.ub = pi
     if node == NodeAP(start_i, start_j):
@@ -58,8 +59,6 @@ def updateBounds(node, start_i, start_j, grid_map, search_tree):
                 locApplyL = True
             if angle_n(node, node.parent, corner) == 0 and dist_n(node.parent, corner) <= dist_n(node.parent, node): 
                 locApplyL = True
-            # if not locApplyL:
-            #     print("bad apply l:", corner.i, corner.j)
             applyL = applyL and locApplyL
 
             locApplyR = False
@@ -69,8 +68,6 @@ def updateBounds(node, start_i, start_j, grid_map, search_tree):
                 locApplyR = True
             if angle_n(node, node.parent, corner) == 0 and dist_n(node.parent, corner) <= dist_n(node.parent, node): 
                 locApplyR = True
-            # if not locApplyR:
-            #     print("bad apply r:", corner.i, corner.j)
             applyR = applyR and locApplyR
         
         if applyL:
@@ -80,8 +77,13 @@ def updateBounds(node, start_i, start_j, grid_map, search_tree):
             node.ub = 0
     
     sucs = grid_map.get_neighbors(node.i, node.j, k=8)
-    for s in sucs:
-        tree_s = search_tree.get_if_expanded(NodeAP(s[0], s[1]))
+    for s in sucs:       
+        tree_s = None
+        if fast:
+            if s[0] == node.prev.i and s[1] == node.prev.j:
+                tree_s = node.prev
+        else:
+            tree_s = search_tree.get_if_expanded(NodeAP(s[0], s[1]))
         point_s = NodeAP(s[0], s[1])
         if not (tree_s is None) and node.parent == tree_s.parent and tree_s != NodeAP(start_i, start_j):
             if tree_s.lb + angle_n(node, node.parent, tree_s) <= 0:
@@ -101,18 +103,16 @@ def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start
     point_start = NodeAP(start_i, start_j)
     nodes = []
     for suc in sucs:
-        snode = NodeAP(suc[0], suc[1])
+        snode = NodeAP(suc[0], suc[1], prev=node)
         if point_start != snode and node.lb <= angle_n(node, node.parent, snode) <= node.ub:
             snode.g = node.parent.g + dist_n(node.parent, snode)
             snode.parent = node.parent
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
-#            updateBounds(snode, start_i, start_j, grid_map, search_tree)
             nodes.append(snode)
         else:
             snode.g = node.g + dist_n(node, snode)
             snode.parent = node
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
-#            updateBounds(snode, start_i, start_j, grid_map, search_tree)
             nodes.append(snode)
     return nodes
 
@@ -128,6 +128,7 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
     ast = search_tree() 
     start = NodeAP(start_i, start_j, g=0, parent = None)
     start.parent = start
+    start.prev = start
     start.apply_heuristic(heuristic_func, goal_i, goal_j)
     start.parent = start
     ast.add_to_open(start)
@@ -147,6 +148,7 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
             return  (True, curr, stats, ast.OPEN, ast.CLOSED)
         
         # expanding curr
+#        print(curr.i, curr.j, "prev", curr.prev.i, curr.prev.j, "parent", curr.parent.i, curr.parent.j)
         stats.expansions += 1 # statistic
         successors = getSuccessors(curr, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, ast)
         
