@@ -1,5 +1,6 @@
 from .utils import compute_cost, Stats, angle_n, dist_n
 from .theta import Node, make_path
+from .grid import Map
 
 from datetime import datetime
 from math import pi
@@ -121,6 +122,8 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
     start_time = datetime.now() #statistic
     
     stats = Stats() # statistic
+
+    grid_map.add_special_point((goal_i, goal_j))
     
     ast = search_tree() 
     start = NodeAP(start_i, start_j, g=0, parent = None)

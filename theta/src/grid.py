@@ -88,8 +88,8 @@ class Map:
         self._width = 0
         self._height = 0
         self._cells = []
+        self._special_points = set()
     
-
     def read_from_string(self, cell_str, width, height):
         '''
         Converting a string (with '@' and 'T' representing obstacles and '.' representing free cells) to a grid
@@ -119,7 +119,6 @@ class Map:
         if i != height:
             raise Exception("Size Error. Map height = ", i, ", but must be", height )
     
-     
     def set_grid_cells(self, width, height, grid_cells):
         '''
         Initialization of map by list of cells.
@@ -158,7 +157,14 @@ class Map:
         if (not self.traversable(i, j - 1)) and (not self.traversable(i - 1, j)):
             return False
         return True
-        
+
+    def add_special_point(self, point):
+        self._special_points.add(point)
+
+    # return true if we can add this point when expand neighbours
+    def stayable_point(self, i, j):
+        return self.point_in_bounds(i, j) and (self.passable_point(i, j) or (i, j) in self._special_points)
+    
     def get_blocked_cells(self, i, j):
         cells = []
         delta = [[0, 0], [-1, 0], [0, -1], [-1, -1]]
@@ -183,9 +189,8 @@ class Map:
                      [1, 2], [-1, -2], [1, -2], [-1, 2],
                      [2, 1], [-2, -1], [2, -1], [-2, 1]]
 
-
         for d in delta:
-            if self.point_in_bounds(i + d[0], j + d[1]):
+            if self.stayable_point(i + d[0], j + d[1]):
                 if self.visible(i, j, i + d[0], j + d[1]):
                     neighbors.append((i + d[0], j + d[1]))
 
@@ -232,4 +237,3 @@ class Map:
 
     def get_size(self):
         return (self._height, self._width)
-

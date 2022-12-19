@@ -1,5 +1,6 @@
 from .utils import compute_cost, Stats
 from .theta import Node, make_path
+from .grid import Map
 
 from datetime import datetime
 import math
@@ -55,6 +56,8 @@ def lazy_theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None
     start_time = datetime.now() #statistic
     
     stats = Stats() # statistic
+
+    grid_map.add_special_point((goal_i, goal_j))
     
     ast = search_tree() 
     start = LazyNode(start_i, start_j, g=0, parent = None, lazy_parent = None, true_node = True)

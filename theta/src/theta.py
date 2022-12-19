@@ -1,4 +1,5 @@
 from .utils import compute_cost, Stats
+from .grid import Map
 
 from datetime import datetime
 import math
@@ -126,12 +127,14 @@ def getMultySuccessors(node, grid_map, goal_i, goal_j, heuristic_func, w, p, k):
     return successors
 
 
-def theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None, w = 1, p = 1, k = 8):
+def theta(grid_map: Map, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None, w = 1, p = 1, k = 8):
     
     start_time = datetime.now() #statistic
     
     stats = Stats() # statistic
     
+    grid_map.add_special_point((goal_i, goal_j))
+
     ast = search_tree() 
     start = Node(start_i, start_j, g=0, parent = None)
     start.parent = start
