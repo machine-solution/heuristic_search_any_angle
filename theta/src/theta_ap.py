@@ -3,8 +3,9 @@ from .theta import Node, make_path
 
 from datetime import datetime
 from math import pi
+import math
 
-class NodeAP:
+class NodeAP(Node):
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None):
         self.i = i
         self.j = j
@@ -18,48 +19,7 @@ class NodeAP:
             self.f = f  
         self.lb = -pi
         self.ub = pi
-            
-    def apply_heuristic(self, heuristic_func, goal_i, goal_j):
-        self.h = heuristic_func(self, goal_i, goal_j)
-        self.f = self.g + self.h
-
-    
-    def __eq__(self, other):
-        '''
-        Estimating where the two search nodes are the same,
-        which is needed to detect dublicates in the search tree.
-        '''
-        return (self.i == other.i) and (self.j == other.j) # TODO I also want to compare parents 
-    
-    def __hash__(self):
-        '''
-        To implement CLOSED as set of nodes we need Node to be hashable.
-        '''
-        ij = self.i, self.j
-        return hash(ij)
-    
-    # this function defines order of taking nodes from OPEN
-    def priority(self):
-        return self.f, -self.g
-
-    def __lt__(self, other):
-        return (self.i, self.j) < (other.i, other.j)
-    
-    def __le__(self, other):
-        return (self.i, self.j) <= (other.i, other.j)
-    
-    def __gt__(self, other):
-        return (self.i, self.j) > (other.i, other.j)
-    
-    def __ge__(self, other):
-        return (self.i, self.j) >= (other.i, other.j)
-    
-    def __eq__(self, other):
-        return (self.i, self.j) == (other.i, other.j)
-    
-    def __ne__(self, other):
-        return (self.i, self.j) != (other.i, other.j)
-    
+        self.tie = math.inf
 
 def make_path(goal):
     '''

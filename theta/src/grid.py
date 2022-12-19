@@ -54,10 +54,12 @@ def intersect_cells(i1, j1, i2, j2):
 
 
 def gcd(a, b):
+    a = abs(a)
+    b = abs(b)
     while (b > 0):
         a %= b
         a, b = b, a
-    return abs(a)
+    return a
 
 
 def intersect_points(i1, j1, i2, j2):

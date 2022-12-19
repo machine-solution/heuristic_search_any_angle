@@ -52,6 +52,9 @@ def weighted_heuristic(node, goal_i, goal_j):
     
     return a * euclidian_distance(node, goal_i, goal_j) +  (1 - a) * theta_heuristic(node, goal_i, goal_j)
 
+def tie_break_heuristic(node, goal_i, goal_j):
+    return (euclidian_distance(node, goal_i, goal_j), theta_heuristic(node, goal_i, goal_j))
+
 class Stats:
     def __init__(self):
         self.difficulty = 0
