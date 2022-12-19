@@ -19,8 +19,19 @@ def split_interval_at_corner_points(grid: Map, interval: tp.Tuple[Fraction, Frac
     l, r, row = interval
     cur = l
     for i in range(ceil(l), floor(r + 1)):
-        if grid.is_corner_point(row, i):
+        if grid.is_corner_point(row, i) and cur != i:
             intervals.append((cur, Fraction(i), row))
             cur = Fraction(i)
-    intervals.append((cur, r, row))
+    if cur != r or len(intervals) == 0:
+        intervals.append((cur, r, row))
     return intervals
+
+
+class Stats:
+    def __init__(self):
+        self.difficulty = 0
+        self.expansions = 0 # algorithm must set this value
+        self.runtime = 0 # algorithm must set this value
+        self.way_length = 0 # algorithm must set this value
+        self.suboptimal = 0
+        self.max_tree_size = 0 # algorithm must set this value
