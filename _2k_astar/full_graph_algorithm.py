@@ -51,8 +51,17 @@ def full_graph_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=
                             h=heuristic_func(i, j, goal_i, goal_j)
                             if heuristic_func else 0,
                             parent=curr_node)
+            if nxt_node == goal_node:
+                path_found = True
+                goal_node = nxt_node  # define g*-value in variable
+                break
+            if grid_map.diagonal_obstacles(nxt_node.i, nxt_node.j):
+                continue
             if not ast.was_expanded(nxt_node):
                 ast.add_to_open(nxt_node)
+        else:
+            continue
+        break
     stats.max_tree_size = max(stats.max_tree_size, len(ast))
 
     if not path_found:

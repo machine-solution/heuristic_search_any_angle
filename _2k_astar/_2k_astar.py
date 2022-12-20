@@ -110,6 +110,9 @@ class Node_2k(Node):
 
 
 def astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, search_tree=None, w=1, k=2):
+    assert grid_map._k == k
+    assert k >= 3
+
     stats = Stats()
     stats.runtime = time.time()
     ast = search_tree()
@@ -122,19 +125,28 @@ def astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, searc
     while not ast.open_is_empty():
         stats.max_tree_size = max(stats.max_tree_size, len(ast))
         curr_node = ast.get_best_node_from_open()
-        ast.add_to_closed(curr_node)
         if curr_node == goal_node:
             path_found = True
             goal_node = curr_node  # define g*-value in variable
             break
+        ast.add_to_closed(curr_node)
         stats.expansions += 1
         for i, j, num in grid_map.get_neighbors(curr_node.i, curr_node.j):
             nxt_node = Node(i, j, g=curr_node.g + compute_cost(curr_node.i, curr_node.j, i, j),
                             h=w * heuristic_func(i, j, goal_i, goal_j, k)
                             if heuristic_func else 0,
                             parent=curr_node)
+            if nxt_node == goal_node:
+                path_found = True
+                goal_node = nxt_node  # define g*-value in variable
+                break
+            if grid_map.diagonal_obstacles(nxt_node.i, nxt_node.j):
+                continue
             if not ast.was_expanded(nxt_node):
                 ast.add_to_open(nxt_node)
+        else:
+            continue
+        break
     stats.max_tree_size = max(stats.max_tree_size, len(ast))
 
     if not path_found:
@@ -146,6 +158,9 @@ def astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, searc
 
 
 def canonical_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, search_tree=None, w=1, k=2):
+    assert grid_map._k == k
+    assert k >= 3
+
     stats = Stats()
     stats.runtime = time.time()
     ast = search_tree()
@@ -169,8 +184,17 @@ def canonical_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=N
                                h=w * heuristic_func(i, j, goal_i, goal_j, k)
                                if heuristic_func else 0,
                                parent=curr_node, number_of_move=num)
+            if nxt_node == goal_node:
+                path_found = True
+                goal_node = nxt_node  # define g*-value in variable
+                break
+            if grid_map.diagonal_obstacles(nxt_node.i, nxt_node.j):
+                continue
             if not ast.was_expanded(nxt_node):
                 ast.add_to_open(nxt_node)
+        else:
+            continue
+        break
     stats.max_tree_size = max(stats.max_tree_size, len(ast))
 
     if not path_found:
