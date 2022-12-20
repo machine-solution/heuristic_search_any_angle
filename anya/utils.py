@@ -2,7 +2,7 @@ import typing as tp
 from fractions import Fraction
 from math import ceil, floor
 
-from grid import Map
+from .grid import Map
 
 
 Number = tp.Union[int, Fraction]

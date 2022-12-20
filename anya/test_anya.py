@@ -1,5 +1,5 @@
-from anya import anya
-from grid import Map
+from .anya import anya
+from .grid import Map
 
 
 def test_1():
