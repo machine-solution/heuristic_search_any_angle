@@ -298,13 +298,13 @@ def generate_observable_cone_successors(grid: Map, interval: tp.Tuple[Fraction, 
         return []
 
     l = root[1] + (interval[0] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
-    l = max(l, 0)
+    l = max(l, Fraction(0))
     if l > grid.width:
         return []
     r = root[1] + (interval[1] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
     if r < 0:
         return []
-    r = min(r, grid.width)
+    r = min(r, Fraction(grid.width))
 
     if r > interval[1]:
         x = ceil(interval[1])

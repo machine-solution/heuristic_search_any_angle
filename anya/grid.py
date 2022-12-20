@@ -12,6 +12,7 @@ class Map:
         self.height = 0
         self.width = 0
         self._cells = []
+        self._special_points = set()
 
     def read_from_string(self, cell_str: str, width: int, height: int):
         """
@@ -122,6 +123,13 @@ class Map:
             return False
         return True
 
+    def add_special_point(self, point):
+        self._special_points.add(point)
+
+    # return true if we can add this point when expand neighbours
+    def stayable_point(self, i, j):
+        return self.point_in_bounds(i, j) and (self.passable_point(i, j) or (i, j) in self._special_points)
+
     def get_blocked_cells(self, i, j):
         cells = []
         delta = [[0, 0], [-1, 0], [0, -1], [-1, -1]]
@@ -147,7 +155,7 @@ class Map:
                      [2, 1], [-2, -1], [2, -1], [-2, 1]]
 
         for d in delta:
-            if self.point_in_bounds(i + d[0], j + d[1]):
+            if self.stayable_point(i + d[0], j + d[1]):
                 if self.visible(i, j, i + d[0], j + d[1]):
                     neighbors.append((i + d[0], j + d[1]))
 
@@ -248,10 +256,12 @@ def intersect_cells(i1, j1, i2, j2):
 
 
 def gcd(a, b):
-    while b > 0:
+    a = abs(a)
+    b = abs(b)
+    while (b > 0):
         a %= b
         a, b = b, a
-    return abs(a)
+    return a
 
 
 def intersect_points(i1, j1, i2, j2):
