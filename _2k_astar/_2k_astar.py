@@ -1,11 +1,10 @@
 import time
-from grid import Map, Node
-from utils import compute_cost, vect_product, scalar_product, Stats
+from .grid import Map, Node
+from .utils import compute_cost, vect_product, scalar_product, Stats
 
 
 class Map_2k(Map):
-    def __init__(self, k):
-        super().__init__()
+    def set_k(self, k):
         self._delta = []
         self._k = k
         self._make_delta()
@@ -110,6 +109,7 @@ class Node_2k(Node):
 
 
 def astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, search_tree=None, w=1, k=2):
+    grid_map.set_k(k)
     assert grid_map._k == k
     assert k >= 3
 
@@ -158,6 +158,7 @@ def astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, searc
 
 
 def canonical_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, search_tree=None, w=1, k=2):
+    grid_map.set_k(k)
     assert grid_map._k == k
     assert k >= 3
 
