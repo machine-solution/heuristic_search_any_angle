@@ -81,7 +81,7 @@ def generate_start_successors(grid: Map, s: tp.Tuple[int, int], target: tp.Tuple
 
     # construct a maximal half-closed interval I1 containing all points observable and to the left of s
     l = s[1]
-    while grid.visible(s[0], s[1], s[0], l) and l > 0:
+    while l >= 0 and grid.visible(s[0], s[1], s[0], l):
         l -= 1
     l += 1
 
@@ -89,7 +89,7 @@ def generate_start_successors(grid: Map, s: tp.Tuple[int, int], target: tp.Tuple
 
     # construct a maximal half-closed interval I2 containing all points observable and to the right of s
     r = s[1]
-    while grid.visible(s[0], s[1], s[0], r) and r < grid.width:
+    while r <= grid.width and grid.visible(s[0], s[1], s[0], r):
         r += 1
     r -= 1
 
@@ -142,6 +142,8 @@ def generate_start_successors(grid: Map, s: tp.Tuple[int, int], target: tp.Tuple
             continue
         l, r, row = interval
         intervals += split_interval_at_corner_points(grid, (Fraction(l), Fraction(r), row))
+
+    # print("I1 I2 I3 I4", I1, I2, I3, I4)
 
     # construct successors
     result = []
@@ -206,44 +208,63 @@ def generate_non_observable_cone_successors(grid: Map, row: int, a: int, root: t
                 q -= 1
 
         I_max = (Fraction(min(p[1], q)), Fraction(max(p[1], q)), row + row_dir)
+        # print("flat I_max col_dir row_dir", I_max, col_dir, row_dir)
 
     else:
         # Non-observable successors of a cone node
 
         p: tp.Tuple[int, Fraction] = (row + row_dir,
-                                      root[1] + Fraction(abs(root[1]-a), abs(root[0]-row)) * (row + row_dir - root[0]))
+                                      root[1] + Fraction(a - root[1], abs(root[0]-row)) * abs(row + row_dir - root[0]))
 
         if col_dir == 1:
 
             if p[1] < a:
-                q = ceil(p[1])
-                while grid.get_cell(row - (row_dir == -1), q) != 0 and q < a:
-                    q += 1
-                if q > a:
-                    return []
-                I_max = (Fraction(q), Fraction(a), row + row_dir)
+                x = a
+                while x > p[1]:
+                    if grid.get_cell(row - (row_dir == -1), x - 1) != 0:
+                        q = x
+                        I_max = (Fraction(q), Fraction(a), row + row_dir)
+                        break
+                    x -= 1
+                else:
+                    q = -1
+                    I_max = (p[1], Fraction(a), row + row_dir)
             else:
+                x = a
+                while x < p[1]:
+                    if grid.get_cell(row - (row_dir == -1), x) != 0:
+                        return []
+                    x += 1
                 q = ceil(p[1])
                 while grid.get_cell(row - (row_dir == -1), q) == 0:
                     q += 1
-                I_max = (Fraction(a), Fraction(q), row + row_dir)
+                I_max = (p[1], Fraction(q), row + row_dir)
 
         else:  # col_dir == -1:
 
             if p[1] > a:
-                q = floor(p[1])
-                while grid.get_cell(row - (row_dir == -1), q - 1) != 0 and q > a:
-                    q -= 1
-                if q < a:
-                    return []
-                I_max = (Fraction(a), Fraction(q), row + row_dir)
+                x = a
+                while x < p[1]:
+                    if grid.get_cell(row - (row_dir == -1), x) != 0:
+                        q = x
+                        I_max = (Fraction(a), Fraction(q), row + row_dir)
+                        break
+                    x += 1
+                else:
+                    q = -1
+                    I_max = (Fraction(a), p[1], row + row_dir)
             else:
+                x = a
+                while x > p[1]:
+                    if grid.get_cell(row - (row_dir == -1), x - 1) != 0:
+                        return []
+                    x -= 1
                 q = floor(p[1])
                 while grid.get_cell(row - (row_dir == -1), q - 1) == 0:
                     q -= 1
-                I_max = (Fraction(q), Fraction(a), row + row_dir)
+                I_max = (Fraction(q), p[1], row + row_dir)
 
-        # print("I_max p row_dir col_dir", I_max, p, row_dir, col_dir)
+        # print("I_max a p q row_dir col_dir", I_max, a, p, q, row_dir, col_dir)
 
     successors = []
     for (l, r, row) in split_interval_at_corner_points(grid, I_max):
@@ -264,32 +285,57 @@ def generate_observable_cone_successors(grid: Map, interval: tp.Tuple[Fraction, 
     if row + row_dir < 0 or row + row_dir > grid.height:
         return []
 
-    if row_dir == -1 and interval[0].denominator == 1 and interval[1].denominator == 1 and \
-            any(grid.get_cell(row - 1, i) != 0 for i in range(interval[0].numerator, interval[1].numerator)):
+    if any(grid.get_cell(row - (row_dir == -1), i) != 0 for i in range(floor(interval[0]), ceil(interval[1]))):
         return []
 
-    if row_dir == 1 and interval[0].denominator == 1 and interval[1].denominator == 1 and \
-            any(grid.get_cell(row, i) != 0 for i in range(interval[0].numerator, interval[1].numerator)):
+    if interval[0] == interval[1] and interval[0].denominator == 1 and \
+            grid.is_between_obstacles(row, interval[0].numerator):
+        return []
+
+    if interval[0] == interval[1] and interval[0].denominator == 1 and \
+            grid.get_cell(row - (row_dir == -1), interval[0].numerator - 1) != 0 and \
+            grid.get_cell(row - (row_dir == -1), interval[0].numerator) != 0:
         return []
 
     l = root[1] + (interval[0] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
+    l = max(l, Fraction(0))
+    if l > grid.width:
+        return []
     r = root[1] + (interval[1] - root[1]) / abs(root[0] - row) * (abs(root[0] - row) + 1)
+    if r < 0:
+        return []
+    r = min(r, Fraction(grid.width))
 
-    if row_dir == -1 and interval[1].denominator == 1 and grid.get_cell(row - 1, interval[1].numerator) != 0 \
-            and root[1] < interval[1]:
-        r = interval[1]
-    if row_dir == -1 and interval[0].denominator == 1 and grid.get_cell(row - 1, interval[0].numerator - 1) != 0 \
-            and root[1] > interval[0]:
-        l = interval[0]
-    if row_dir == 1 and interval[1].denominator == 1 and grid.get_cell(row, interval[1].numerator) != 0 \
-            and root[1] < interval[1]:
-        r = interval[1]
-    if row_dir == 1 and interval[0].denominator == 1 and grid.get_cell(row, interval[0].numerator - 1) != 0 \
-            and root[1] > interval[0]:
-        l = interval[0]
+    if r > interval[1]:
+        x = ceil(interval[1])
+        while x < r:
+            if grid.get_cell(row - (row_dir == -1), x) != 0:
+                r = Fraction(x)
+                break
+            x += 1
+    elif r < interval[1]:
+        x = floor(interval[1])
+        while x > r:
+            if grid.get_cell(row - (row_dir == -1), x - 1) != 0:
+                return []
+            x -= 1
+
+    if l > interval[0]:
+        x = ceil(interval[0])
+        while x < l:
+            if grid.get_cell(row - (row_dir == -1), x) != 0:
+                return []
+            x += 1
+    elif l < interval[0]:
+        x = floor(interval[0])
+        while x > l:
+            if grid.get_cell(row - (row_dir == -1), x - 1) != 0:
+                l = Fraction(x)
+                break
+            x -= 1
 
     I_max: tp.Tuple[Fraction, Fraction, int] = (l, r, row + row_dir)
-    # print("I_max", I_max)
+    # print("obs cone I_max", I_max)
     successors = []
     for (l, r, row) in split_interval_at_corner_points(grid, I_max):
         successors.append(Node((l, r), row, root, root_dist,
@@ -344,7 +390,7 @@ def turning_point_check(grid: Map, p1: tp.Tuple[int, Fraction],
         if grid.get_cell(p[0], p[1]) == 1:
             return True, 1, -1
         elif grid.get_cell(p[0] - 1, p[1]) == 1:
-            return True, -1, 1
+            return True, -1, -1
         else:
             return False, 1, 1
 
@@ -410,7 +456,7 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
 
         # for x in successors:
         #    print("obs succ", x.row, x.interval, x.root, x.is_empty())
-        sz = len(successors)
+        # sz = len(successors)
 
         # generate non-observable cone successors if p is a turning point
         is_turning_point, row_dir, col_dir = turning_point_check(grid, p, node.root)
@@ -431,7 +477,7 @@ def generate_successors(grid: Map, node: Node, target: tp.Tuple[int, int]) -> tp
 
         # for x in successors:
         #    print("obs succ", x.row, x.interval, x.root, x.is_empty())
-        # sz = len(successors)
+        sz = len(successors)
 
         # generate non-observable successors if a is a turning point
         is_turning_point, row_dir, col_dir = turning_point_check(grid, a, node.root)
@@ -481,6 +527,13 @@ def anya(grid: Map, source: tp.Tuple[int, int],
 
     start_node = Node((Fraction(source[1]), Fraction(source[1])), source[0], (-1, -1),
                       g_value=0, f_value=euclidean_distance(source, target), is_start=True)
+
+    if source == target and interface == 0:
+        stats.runtime = time.time() - start
+        stats.way_length = 0
+        return True, start_node, stats
+    elif source == target:
+        return 0, [source]
 
     open_: tp.List[Node] = [start_node]
     heapify(open_)
