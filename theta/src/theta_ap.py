@@ -47,7 +47,7 @@ def make_path(goal):
 def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = True):
     node.lb = -pi
     node.ub = pi
-    if node == NodeAP(start_i, start_j):
+    if node == Point(start_i, start_j):
         return
     
     delta = [[0, 0], [1, 0], [0, 1], [1, 1]]
@@ -57,7 +57,7 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
         applyL = True
         applyR = True
         for d in delta:
-            corner = NodeAP(b[0] + d[0], b[1] + d[1])
+            corner = Point(b[0] + d[0], b[1] + d[1])
             locApplyL = False
             if node.parent == corner:
                 locApplyL = True
@@ -90,8 +90,8 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
                 tree_s = node.prev
         else:
             tree_s = search_tree.get_if_expanded(NodeAP(s[0], s[1]))
-        point_s = NodeAP(s[0], s[1])
-        if not (tree_s is None) and node.parent == tree_s.parent and tree_s != NodeAP(start_i, start_j):
+        point_s = Point(s[0], s[1])
+        if not (tree_s is None) and node.parent == tree_s.parent and tree_s != Point(start_i, start_j):
             if tree_s.lb + angle_n(node, node.parent, tree_s) <= 0:
                 node.lb = max(node.lb, tree_s.lb + angle_n(node, node.parent, tree_s))
             if tree_s.ub + angle_n(node, node.parent, tree_s) >= 0:
