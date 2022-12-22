@@ -1,4 +1,4 @@
-from .utils import compute_cost, Stats
+from .utils import compute_cost, Stats, sqr_dist
 from .grid import Map
 
 from datetime import datetime
@@ -18,8 +18,8 @@ class Node:
             self.f = f  
         self.tie = math.inf
             
-    def apply_heuristic(self, heuristic_func, goal_i, goal_j, w=1):
-        h = heuristic_func(self, goal_i, goal_j) * w
+    def apply_heuristic(self, heuristic_func, goal_i, goal_j, w=0.1):
+        h = heuristic_func(self, goal_i, goal_j, w)
         if type(h) == tuple:
             self.h = h[0]
             self.tie = h[1]
@@ -80,50 +80,28 @@ def make_path(goal):
     return path[::-1], length
 
 
-def getSuccessor(node, i, j, grid_map, goal_i, goal_j, heuristic_func, w, p):
-    parents = [node]
-    while p > 0:
-        parents.append(parents[-1].parent)
-        p -= 1
-    
-    for parent in reversed(parents):
-        if grid_map.visible(parent.i, parent.j, i, j):
-            suc = Node(i, j, g = parent.g + compute_cost(parent.i, parent.j, i, j),
-                        parent = parent)
-            suc.apply_heuristic(heuristic_func, goal_i, goal_j, w)
-            return suc
+def getSuccessor(node, i, j, grid_map, goal_i, goal_j, heuristic_func, w):
+    if grid_map.visible(node.parent.i, node.parent.j, i, j):
+        if sqr_dist(i, j, node.parent.i, node.parent.j) <= sqr_dist(node.i, node.j, node.parent.i, node.parent.j):
+            return None
+        suc = Node(i, j, g = node.parent.g + compute_cost(node.parent.i, node.parent.j, i, j),
+                    parent = node.parent)
+        suc.apply_heuristic(heuristic_func, goal_i, goal_j, w)
+        return suc
+    else:
+        suc = Node(i, j, g = node.g + compute_cost(node.i, node.j, i, j),
+                    parent = node)
+        suc.apply_heuristic(heuristic_func, goal_i, goal_j, w)
+        return suc
 
 
 def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, w, p, k):
     neighbors = grid_map.get_neighbors(node.i, node.j, k)
     successors = []
     for cell in neighbors:
-        successors.append(getSuccessor(node, cell[0], cell[1], grid_map, goal_i, goal_j, heuristic_func, w, p))
-    return successors
-
-
-def getMultySuccessor(node, i, j, grid_map, goal_i, goal_j, heuristic_func, w, p):
-    nodes = []
-    parents = [node]
-    while p > 0:
-        parents.append(parents[-1].parent)
-        p -= 1
-    
-    for parent in reversed(parents):
-        if grid_map.visible(parent.i, parent.j, i, j):
-            suc = Node(i, j, g = parent.g + compute_cost(parent.i, parent.j, i, j),
-                        parent = parent)
-            suc.apply_heuristic(heuristic_func, goal_i, goal_j, w)
-            nodes.append(suc)
-    
-    return nodes
-
-
-def getMultySuccessors(node, grid_map, goal_i, goal_j, heuristic_func, w, p, k):
-    neighbors = grid_map.get_neighbors(node.i, node.j, k)
-    successors = []
-    for cell in neighbors:
-        successors.extend(getMultySuccessor(node, cell[0], cell[1], grid_map, goal_i, goal_j, heuristic_func, w, p))
+        suc = getSuccessor(node, cell[0], cell[1], grid_map, goal_i, goal_j, heuristic_func, w)
+        if not (suc is None):
+            successors.append(suc)
     return successors
 
 
@@ -161,48 +139,6 @@ def theta(grid_map: Map, start_i, start_j, goal_i, goal_j, heuristic_func = None
         for node in successors:
             ast.add_to_open(node)
                 
-        stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
-        
-    stats.runtime = datetime.now() - start_time # statistic
-    stats.way_length = 0 # statistic
-    return (False, None, stats, ast.OPEN, ast.CLOSED)
-
-
-def theta_multy_choose(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None,
-                       search_tree = None, w = 1, p = 1, k = 8):
-    
-    start_time = datetime.now() #statistic
-    
-    stats = Stats() # statistic
-
-    ast = search_tree() 
-    start = Node(start_i, start_j, g=0, parent = None)
-    start.parent = start
-    start.apply_heuristic(heuristic_func, goal_i, goal_j, w)
-    start.parent = start
-    ast.add_to_open(start)
-    steps = 0
-    nodes_created = 0
-    
-    while not ast.open_is_empty():
-        curr = ast.get_best_node_from_open()
-        if curr is None:
-            break
-            
-        ast.add_to_closed(curr)
-        
-        if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
-            stats.runtime = datetime.now() - start_time # statistic
-            stats.way_length = make_path(curr)[1] # statistic
-            return  (True, curr, stats, ast.OPEN, ast.CLOSED)
-        
-        # expanding curr
-        stats.expansions += 1 # statistic
-        successors = getMultySuccessors(curr, grid_map, goal_i, goal_j, heuristic_func, w, p, k)
-        
-        for node in successors:
-            ast.add_to_open(node)
-        
         stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
         
     stats.runtime = datetime.now() - start_time # statistic

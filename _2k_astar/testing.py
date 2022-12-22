@@ -1,7 +1,7 @@
 from numpy.random import randint
-from grid import Node
-from visualisation import draw
-from utils import make_path
+from .grid import Node
+from .visualisation import draw
+from .utils import make_path
 
 
 def simple_test(unfilled_grid_map, search_func, task, *args, **kwargs):

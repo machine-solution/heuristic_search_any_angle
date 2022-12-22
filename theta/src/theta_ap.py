@@ -1,17 +1,22 @@
-from .utils import compute_cost, Stats, angle_n, dist_n
+from .utils import compute_cost_n, Stats, sqr_dist_n, Vector, Point, angle_n
 from .theta import Node, make_path
 from .grid import Map
 
 from datetime import datetime
 from math import pi
 import math
-
 class NodeAP(Node):
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, prev = None):
         self.i = i
         self.j = j
-        self.parent = parent
-        self.prev = prev
+        if parent is None:
+            self.parent = self
+        else:
+            self.parent = parent
+        if prev is None:
+            self.prev = self
+        else:
+            self.prev = prev
         self.g = g
         self.h = h
         self.true_node = True
@@ -38,10 +43,11 @@ def make_path(goal):
     return path[::-1], length
 
 
+
 def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = True):
     node.lb = -pi
     node.ub = pi
-    if node == NodeAP(start_i, start_j):
+    if node == Point(start_i, start_j):
         return
     
     delta = [[0, 0], [1, 0], [0, 1], [1, 1]]
@@ -51,13 +57,13 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
         applyL = True
         applyR = True
         for d in delta:
-            corner = NodeAP(b[0] + d[0], b[1] + d[1])
+            corner = Point(b[0] + d[0], b[1] + d[1])
             locApplyL = False
             if node.parent == corner:
                 locApplyL = True
             if angle_n(node, node.parent, corner) < 0:
                 locApplyL = True
-            if angle_n(node, node.parent, corner) == 0 and dist_n(node.parent, corner) <= dist_n(node.parent, node): 
+            if angle_n(node, node.parent, corner) == 0 and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
                 locApplyL = True
             applyL = applyL and locApplyL
 
@@ -66,7 +72,7 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
                 locApplyR = True
             if angle_n(node, node.parent, corner) > 0:
                 locApplyR = True
-            if angle_n(node, node.parent, corner) == 0 and dist_n(node.parent, corner) <= dist_n(node.parent, node): 
+            if angle_n(node, node.parent, corner) == 0 and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
                 locApplyR = True
             applyR = applyR and locApplyR
         
@@ -84,13 +90,13 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
                 tree_s = node.prev
         else:
             tree_s = search_tree.get_if_expanded(NodeAP(s[0], s[1]))
-        point_s = NodeAP(s[0], s[1])
-        if not (tree_s is None) and node.parent == tree_s.parent and tree_s != NodeAP(start_i, start_j):
+        point_s = Point(s[0], s[1])
+        if not (tree_s is None) and node.parent == tree_s.parent and tree_s != Point(start_i, start_j):
             if tree_s.lb + angle_n(node, node.parent, tree_s) <= 0:
                 node.lb = max(node.lb, tree_s.lb + angle_n(node, node.parent, tree_s))
             if tree_s.ub + angle_n(node, node.parent, tree_s) >= 0:
                 node.ub = min(node.ub, tree_s.ub + angle_n(node, node.parent, tree_s))
-        if dist_n(node.parent, point_s) < dist_n(node.parent, node) and node.parent != point_s and (tree_s is None or node.parent != tree_s.parent):
+        if sqr_dist_n(node.parent, point_s) < sqr_dist_n(node.parent, node) and node.parent != point_s and (tree_s is None or node.parent != tree_s.parent):
             if angle_n(node, node.parent, point_s) < 0:
                 node.lb = max(node.lb, angle_n(node, node.parent, point_s))
             if angle_n(node, node.parent, point_s) > 0:
@@ -100,25 +106,27 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
 def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, search_tree):
     updateBounds(node, start_i, start_j, grid_map, search_tree)
     sucs = grid_map.get_neighbors(node.i, node.j, k=8)
-    point_start = NodeAP(start_i, start_j)
+    point_start = Point(start_i, start_j)
     nodes = []
     for suc in sucs:
-        snode = NodeAP(suc[0], suc[1], prev=node)
-        if point_start != snode and node.lb <= angle_n(node, node.parent, snode) <= node.ub:
-            snode.g = node.parent.g + dist_n(node.parent, snode)
-            snode.parent = node.parent
+        spoint = Point(suc[0], suc[1])
+        svector = Vector(suc[0] - node.parent.i, suc[1] - node.parent.j)
+        if point_start != spoint and node.lb <= angle_n(node, node.parent, spoint) <= node.ub:
+            if sqr_dist_n(spoint, node.parent) <= sqr_dist_n(node, node.parent):
+                continue
+            snode = NodeAP(suc[0], suc[1], g=node.parent.g + compute_cost_n(node.parent, spoint),
+            parent=node.parent, prev=node)
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
             nodes.append(snode)
         else:
-            snode.g = node.g + dist_n(node, snode)
-            snode.parent = node
+            snode = NodeAP(suc[0], suc[1], g=node.g + compute_cost_n(node, spoint),
+            parent=node, prev=node)
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
             nodes.append(snode)
     return nodes
 
 
 def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None):
-    
     start_time = datetime.now() #statistic
     
     stats = Stats() # statistic
@@ -126,21 +134,16 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
     grid_map.add_special_point((goal_i, goal_j))
     
     ast = search_tree() 
-    start = NodeAP(start_i, start_j, g=0, parent = None)
-    start.parent = start
-    start.prev = start
+    start = NodeAP(start_i, start_j, g=0, parent = None, prev = None)
     start.apply_heuristic(heuristic_func, goal_i, goal_j)
-    start.parent = start
     ast.add_to_open(start)
     
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
         if curr is None:
             break
-            
+        
         ast.add_to_closed(curr)
-
-#        print("(", curr.parent.i, ",", curr.parent.j, ") --> (", curr.i, ",", curr.j, ")  <", curr.lb, ",", curr.ub, ">")
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
@@ -148,7 +151,6 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
             return  (True, curr, stats, ast.OPEN, ast.CLOSED)
         
         # expanding curr
-#        print(curr.i, curr.j, "prev", curr.prev.i, curr.prev.j, "parent", curr.parent.i, curr.parent.j)
         stats.expansions += 1 # statistic
         successors = getSuccessors(curr, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, ast)
         
