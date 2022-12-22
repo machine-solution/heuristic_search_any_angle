@@ -1,4 +1,3 @@
-canonical.h_2k.w=1_k=3
 difficulty,expansions,runtime,way_length,suboptimal,max_tree_size
 0,3,0.000204,3.0,1.0,10
 4,31,0.000657,16.414213562373096,1.0,40

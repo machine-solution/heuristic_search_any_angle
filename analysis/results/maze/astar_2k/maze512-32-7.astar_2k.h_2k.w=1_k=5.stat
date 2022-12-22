@@ -1,4 +1,3 @@
-astar_2k.h_2k.w=1_k=5
 difficulty,expansions,runtime,way_length,suboptimal,max_tree_size
 0,3,0.000976,3.0,1.0,64
 4,25,0.009505,16.162277660168378,0.984651,681

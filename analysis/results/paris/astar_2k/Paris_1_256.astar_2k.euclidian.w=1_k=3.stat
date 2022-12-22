@@ -1,4 +1,3 @@
-astar_2k.euclidian.w=1_k=3
 difficulty,expansions,runtime,way_length,suboptimal,max_tree_size
 0,1,8.2e-05,1.0,1.0,1
 1,7,0.000487,4.82842712474619,1.0,39

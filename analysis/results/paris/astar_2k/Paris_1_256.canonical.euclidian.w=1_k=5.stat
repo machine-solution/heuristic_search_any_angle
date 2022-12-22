@@ -1,4 +1,3 @@
-canonical.euclidian.w=1_k=5
 difficulty,expansions,runtime,way_length,suboptimal,max_tree_size
 0,1,0.000233,1.0,1.0,1
 1,2,0.000378,4.47213595499958,0.92621,33
