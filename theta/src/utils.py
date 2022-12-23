@@ -49,6 +49,9 @@ class Point:
     def __repr__(self):
         return "(" + str(self.i) + ", " + str(self.j) + ")"
 
+    def __sub__(self, other):
+        return Vector(self.i - other.i, self.j- other.j)
+
 # comparators for rays
 class Vector:
     def __init__(self, i, j):
