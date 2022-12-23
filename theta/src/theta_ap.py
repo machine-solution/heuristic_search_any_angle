@@ -1,10 +1,11 @@
-from .utils import compute_cost_n, Stats, sqr_dist_n, Vector, Point, angle_n
+from .utils import compute_cost_n, Stats, sqr_dist_n, Vector, Point
 from .theta import Node, make_path
 from .grid import Map
 
 from datetime import datetime
 from math import pi
 import math
+
 class NodeAP(Node):
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, prev = None):
         self.i = i
@@ -23,10 +24,15 @@ class NodeAP(Node):
         if f is None:
             self.f = self.g + h
         else:
-            self.f = f  
-        self.lb = -pi
-        self.ub = pi
+            self.f = f 
+        self.lv = Vector(self.parent.i - self.i, self.parent.j - self.j)
+        self.uv = Vector(self.parent.i - self.i, self.parent.j - self.j)
+        self.straight = Vector(self.i - self.parent.i, self.j - self.parent.j)
         self.tie = math.inf
+
+    def __repr__(self):
+        return str(self.i) + ", " + str(self.j)
+
 
 def make_path(goal):
     '''
@@ -43,11 +49,11 @@ def make_path(goal):
     return path[::-1], length
 
 
-
-def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = True):
-    node.lb = -pi
-    node.ub = pi
+def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree):
+    # print("update bounds node ", node.i, node.j)
+    # print("prev", node.prev.i, node.prev.j, "parent", node.parent.i, node.parent.j)
     if node == Point(start_i, start_j):
+        # print("Updated: ", node.i, node.j, "lv: ", node.lv, " uv: ", node.uv )
         return
     
     delta = [[0, 0], [1, 0], [0, 1], [1, 1]]
@@ -55,52 +61,71 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree, fast = T
     
     for b in blocked:
         applyL = True
-        applyR = True
+        applyU = True
         for d in delta:
             corner = Point(b[0] + d[0], b[1] + d[1])
+            vcorner = Vector(corner.i - node.parent.i, corner.j - node.parent.j)
+            locApplyU = False
+            if node.parent == corner:
+                locApplyU = True
+            if node.straight < vcorner:
+                locApplyU = True
+            if node.straight == vcorner and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
+                locApplyU = True
+            applyU = applyU and locApplyU
+
             locApplyL = False
             if node.parent == corner:
                 locApplyL = True
-            if angle_n(node, node.parent, corner) < 0:
+            if node.straight > vcorner:
                 locApplyL = True
-            if angle_n(node, node.parent, corner) == 0 and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
+            if node.straight == vcorner and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
                 locApplyL = True
             applyL = applyL and locApplyL
-
-            locApplyR = False
-            if node.parent == corner:
-                locApplyR = True
-            if angle_n(node, node.parent, corner) > 0:
-                locApplyR = True
-            if angle_n(node, node.parent, corner) == 0 and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
-                locApplyR = True
-            applyR = applyR and locApplyR
         
         if applyL:
-            node.lb = 0
+            node.lv = node.straight
+            # print("low vector by cell ", b, "to", node.lv)
         
-        if applyR:
-            node.ub = 0
+        if applyU:
+            node.uv = node.straight
+            # print("up  vector by cell ", b, "to", node.uv)
     
     sucs = grid_map.get_neighbors(node.i, node.j, k=8)
     for s in sucs:       
         tree_s = None
-        if fast:
-            if s[0] == node.prev.i and s[1] == node.prev.j:
-                tree_s = node.prev
-        else:
-            tree_s = search_tree.get_if_expanded(NodeAP(s[0], s[1]))
+        if s[0] == node.prev.i and s[1] == node.prev.j:
+            tree_s = node.prev
+
         point_s = Point(s[0], s[1])
+        vector_s = Vector(s[0] - node.parent.i, s[1] - node.parent.j)
         if not (tree_s is None) and node.parent == tree_s.parent and tree_s != Point(start_i, start_j):
-            if tree_s.lb + angle_n(node, node.parent, tree_s) <= 0:
-                node.lb = max(node.lb, tree_s.lb + angle_n(node, node.parent, tree_s))
-            if tree_s.ub + angle_n(node, node.parent, tree_s) >= 0:
-                node.ub = min(node.ub, tree_s.ub + angle_n(node, node.parent, tree_s))
-        if sqr_dist_n(node.parent, point_s) < sqr_dist_n(node.parent, node) and node.parent != point_s and (tree_s is None or node.parent != tree_s.parent):
-            if angle_n(node, node.parent, point_s) < 0:
-                node.lb = max(node.lb, angle_n(node, node.parent, point_s))
-            if angle_n(node, node.parent, point_s) > 0:
-                node.ub = min(node.ub, angle_n(node, node.parent, point_s))
+            # print("prev bounds", "lv", tree_s.lv, "uv", tree_s.uv)
+            if tree_s.lv <= node.straight:
+                if tree_s.lv >= node.lv:
+                    node.lv = tree_s.lv
+                # print("low vector by prev ", point_s, "to", node.lv)
+            # else:
+            #     node.lv = node.straight
+            if tree_s.uv >= node.straight:
+                node.uv = min(node.uv, tree_s.uv)
+                if tree_s.uv <= node.uv:
+                    node.uv = tree_s.uv
+                # print("up  vector by prev ", point_s, "to", node.uv)
+            # else:
+            #     node.uv = node.straight
+        if node.parent != point_s and (tree_s is None or node.parent != tree_s.parent) and sqr_dist_n(node.parent, point_s) < sqr_dist_n(node.parent, node):
+            if vector_s < node.straight:
+                if vector_s >= node.lv:
+                    node.lv = vector_s
+                # print("low vector by point ", point_s, "to", node.lv)
+            if vector_s > node.straight:
+                if vector_s <= node.uv:
+                    node.uv = vector_s
+                # print("up  vector by point ", point_s, "to", node.uv)
+
+    # print("Updated: ", node.i, node.j, "lv: ", node.lv, " uv: ", node.uv )
+    return
 
 
 def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, search_tree):
@@ -111,7 +136,9 @@ def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start
     for suc in sucs:
         spoint = Point(suc[0], suc[1])
         svector = Vector(suc[0] - node.parent.i, suc[1] - node.parent.j)
-        if point_start != spoint and node.lb <= angle_n(node, node.parent, spoint) <= node.ub:
+        # print(spoint, " : ", node.lv, svector, node.uv)
+        if point_start != spoint and (node.lv <= svector <= node.straight or node.straight <= svector <= node.uv):
+            # print("  visible")
             if sqr_dist_n(spoint, node.parent) <= sqr_dist_n(node, node.parent):
                 continue
             snode = NodeAP(suc[0], suc[1], g=node.parent.g + compute_cost_n(node.parent, spoint),
@@ -119,6 +146,7 @@ def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
             nodes.append(snode)
         else:
+            # print("invisible")
             snode = NodeAP(suc[0], suc[1], g=node.g + compute_cost_n(node, spoint),
             parent=node, prev=node)
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
@@ -144,6 +172,8 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
             break
         
         ast.add_to_closed(curr)
+
+        # print("get", curr, "prev", curr.prev, "parent", curr.parent)
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
