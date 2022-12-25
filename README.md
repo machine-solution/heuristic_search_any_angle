@@ -19,6 +19,14 @@ We implemented and compared these Any-Angle Pathfinding algorithms:
 - [Animation of running Theta](demo/animation_for_theta.ipynb)
 - [Visualization of 2^k A* with expanded nodes](demo/extra_plots_for_2k_astar.ipynb)
 
+## Algorithm comparison
+
+We run algorithms on maps ... (links, names)
+
+All data is stored in folder [analysis](analysis).
+
+[Notebook with analytics](https://github.com/machine-solution/heuristic_search_any_angle/blob/restructure/graphics.ipynb)
+
 ## Installation
 
 Clone repository:
