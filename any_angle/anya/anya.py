@@ -550,10 +550,12 @@ def anya(grid: Map, source: tp.Tuple[int, int],
             # path found
             stats.runtime = time.time() - start
             stats.way_length = cur.g_value + euclidean_distance(cur.root, target)
+            stats.path = get_path(target, cur)
+            stats.path_found = True
             if interface == 0:
                 return True, cur, stats
             else:
-                return cur.g_value + euclidean_distance(cur.root, target), get_path(target, cur)
+                return cur.g_value + euclidean_distance(cur.root, target), stats.path
 
         for succ in generate_successors(grid, cur, target):
             if succ.is_empty():
@@ -569,6 +571,7 @@ def anya(grid: Map, source: tp.Tuple[int, int],
             stats.max_tree_size += 1  # TODO
 
     stats.runtime = time.time() - start
+    stats.path_found = False
     # path not found
     if interface == 0:
         return False, None, stats

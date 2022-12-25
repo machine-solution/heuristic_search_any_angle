@@ -37,7 +37,8 @@ def angle(ax, ay, ox, oy, bx, by):
     if bx == ox and by == oy:
         return 0
 
-    return math.asin(cross_product(ax - ox, ay - oy, bx - ox, by - oy) / (length(ax - ox, ay - oy) * length(bx - ox, by - oy)))
+    return math.asin(
+        cross_product(ax - ox, ay - oy, bx - ox, by - oy) / (length(ax - ox, ay - oy) * length(bx - ox, by - oy)))
 
 
 class Point:
@@ -49,7 +50,7 @@ class Point:
         return "(" + str(self.i) + ", " + str(self.j) + ")"
 
     def __sub__(self, other):
-        return Vector(self.i - other.i, self.j- other.j)
+        return Vector(self.i - other.i, self.j - other.j)
 
 
 # comparators for rays
@@ -94,7 +95,7 @@ class Vector:
         return Vector(self.i + other.i, self.j + other.j)
 
     def __sub__(self, other):
-        return Vector(self.i - other.i, self.j- other.j)
+        return Vector(self.i - other.i, self.j - other.j)
 
     def __lt__(self, other):
         if self.inf != other.inf:
@@ -135,17 +136,16 @@ def compute_cost_n(a, b):
     return dist(a.i, a.j, b.i, b.j)
 
 
-def euclidian_distance(node, goal_i, goal_j, wh = 0.1):
-    
+def euclidian_distance(node, goal_i, goal_j, wh=0.1):
     return dist(node.i, node.j, goal_i, goal_j)
 
 
-def theta_heuristic(node, goal_i, goal_j, wh = 0.1):
+def theta_heuristic(node, goal_i, goal_j, wh=0.1):
     return max(0, node.parent.g + compute_cost(node.parent.i, node.parent.j, goal_i, goal_j))
 
 
-def weighted_heuristic(node, goal_i, goal_j, wh = 0.1):
-    return (1 - wh) * euclidian_distance(node, goal_i, goal_j) +  wh * theta_heuristic(node, goal_i, goal_j)
+def weighted_heuristic(node, goal_i, goal_j, wh=0.1):
+    return (1 - wh) * euclidian_distance(node, goal_i, goal_j) + wh * theta_heuristic(node, goal_i, goal_j)
 
 
 def tie_break_heuristic(node, goal_i, goal_j):

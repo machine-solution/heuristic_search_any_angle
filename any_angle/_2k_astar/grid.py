@@ -22,24 +22,24 @@ class Node:
         self.parent = parent
 
     def __eq__(self, other):
-        '''
+        """
         Estimating where the two search nodes are the same,
         which is needed to detect dublicates in the search tree.
-        '''
+        """
         return (self.i == other.i) and (self.j == other.j)
 
     def __hash__(self):
-        '''
+        """
         To implement CLOSED as set of nodes we need Node to be hashable.
-        '''
+        """
         ij = self.i, self.j
         return hash(ij)
 
     def __lt__(self, other):
-        '''
+        """
         Comparing the keys (i.e. the f-values) of two nodes,
         which is needed to sort/extract the best element from OPEN.
 
         This comparator is very basic. We will code a more plausible comparator further on.
-        '''
+        """
         return self.f < other.f

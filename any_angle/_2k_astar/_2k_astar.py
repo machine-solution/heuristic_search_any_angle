@@ -3,7 +3,7 @@ import time
 from ..common.grid import Map
 from ..common.api import Stats
 from .grid import Node
-from .utils import compute_cost, vect_product, scalar_product
+from .utils import compute_cost, vect_product, scalar_product, make_path
 
 
 class Map2K(Map):
@@ -156,6 +156,8 @@ def astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, searc
         goal_node = None
     else:
         stats.way_length = goal_node.g
+        stats.path_found = True
+        stats.path = [(x.i, x.j) for x in make_path(goal_node)[0]]
     stats.runtime = time.time() - stats.runtime
     return path_found, goal_node, stats, ast.OPEN, ast.CLOSED
 
@@ -205,6 +207,8 @@ def canonical_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=N
         goal_node = None
     else:
         stats.way_length = goal_node.g
+        stats.path_found = True
+        stats.path = [(x.i, x.j) for x in make_path(goal_node)[0]]
     stats.runtime = time.time() - stats.runtime
     return path_found, goal_node, stats, ast.OPEN, ast.CLOSED
 

@@ -153,10 +153,12 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, se
 
         ast.add_to_closed(curr)
         
-        if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
-            stats.runtime = datetime.now() - start_time # statistic
-            stats.way_length = make_path(curr)[1] # statistic
-            return  (True, curr, stats, ast.OPEN, ast.CLOSED)
+        if (curr.i == goal_i) and (curr.j == goal_j):  # curr is goal
+            stats.runtime = datetime.now() - start_time  # statistic
+            path, stats.way_length = make_path(curr)  # statistic
+            stats.path = [(x.i, x.j) for x in path]
+            stats.path_found = True
+            return True, curr, stats, ast.OPEN, ast.CLOSED
         
         # expanding curr
         stats.expansions += 1  # statistic
