@@ -10,10 +10,6 @@ def simple_intersect_cells(n, m):
             continue
         if x > 0:
             cells.append((x - 1, y))
-        # if y * n == x * m:
-        #     cells.append((x, y - 1))
-        #     if x > 0:
-        #         cells.append((x - 1, y - 1))
     return cells
 
 
@@ -81,10 +77,6 @@ def intersect_points(i1, j1, i2, j2):
 class Map:
 
     def __init__(self):
-        '''
-        Default constructor
-        '''
-
         self._width = 0
         self._height = 0
         self._cells = []

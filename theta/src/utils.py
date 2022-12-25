@@ -54,12 +54,41 @@ class Point:
 
 # comparators for rays
 class Vector:
-    def __init__(self, i, j):
+    # inf == 0 means not \infty, inf == 1 means +\infty, inf == -1 means  -\infty
+    def __init__(self, i, j, inf=0):
         self.i = i
         self.j = j
+        self.inf = inf
 
     def __repr__(self):
+        if self.inf > 0:
+            return "+infty"
+        if self.inf < 0:
+            return "-infty"
         return "(" + str(self.i) + ", " + str(self.j) + ")"
+
+    def length(self):
+        return length(self.i, self.j)
+
+    def angle_rad(self, i, j):
+        alpha = angle(i, j, 0, 0, self.i, self.j)
+        if scalar_product(self.i, self.j, i, j) < 0:
+            if alpha < 0:
+                return -math.pi - alpha
+            else:
+                return math.pi - alpha
+        else:
+            return alpha
+
+    def angle_deg(self, i, j):
+        alpha = angle(i, j, 0, 0, self.i, self.j) * 180 / math.pi
+        if scalar_product(self.i, self.j, i, j) < 0:
+            if alpha < 0:
+                return -math.pi - alpha
+            else:
+                return math.pi - alpha
+        else:
+            return alpha
 
     def __add__(self, other):
         return Vector(self.i + other.i, self.j + other.j)
@@ -68,20 +97,29 @@ class Vector:
         return Vector(self.i - other.i, self.j- other.j)
 
     def __lt__(self, other):
+        if self.inf != other.inf:
+            return self.inf < other.inf
         return cross_product(self.i, self.j, other.i, other.j) < 0
 
     def __gt__(self, other):
+        if self.inf != other.inf:
+            return self.inf > other.inf
         return cross_product(self.i, self.j, other.i, other.j) > 0
 
     def __le__(self, other):
+        if self.inf != other.inf:
+            return self.inf <= other.inf
         return cross_product(self.i, self.j, other.i, other.j) <= 0
 
     def __ge__(self, other):
+        if self.inf != other.inf:
+            return self.inf >= other.inf
         return cross_product(self.i, self.j, other.i, other.j) >= 0
 
     def __eq__(self, other):
+        if self.inf != other.inf:
+            return self.inf == other.inf
         return cross_product(self.i, self.j, other.i, other.j) == 0
-
 
 
 # for nodes

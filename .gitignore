@@ -3,3 +3,4 @@ mkn_env
 .mypy_cache
 __pycache__
 .ipynb_checkpoints
+*.gif

@@ -46,12 +46,7 @@ class SearchTreePQS_SDD(SearchTreePQS): #SearchTree which uses PriorityQueue for
 
     def __len__(self):
         return len(self._open) + len(self._closed)
-
-    '''
-    Adding a node to the search-tree (i.e. to OPEN).
-    It's may be a duplicate, and it will be checked in 
-    'get_best_node_from_open' method
-    '''    
+  
     def add_to_open(self, item):
         if (self._best.get(item) is None) or (self._best.get(item) > item.g):
             heappush(self._open, (item.priority(), item))

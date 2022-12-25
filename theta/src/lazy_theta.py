@@ -1,6 +1,5 @@
 from .utils import compute_cost, Stats
 from .theta import Node, make_path
-from .grid import Map
 
 from datetime import datetime
 import math

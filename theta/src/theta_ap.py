@@ -1,6 +1,5 @@
 from .utils import compute_cost_n, Stats, sqr_dist_n, Vector, Point
 from .theta import Node, make_path
-from .grid import Map
 
 from datetime import datetime
 from math import pi
@@ -25,8 +24,8 @@ class NodeAP(Node):
             self.f = self.g + h
         else:
             self.f = f 
-        self.lv = Vector(self.parent.i - self.i, self.parent.j - self.j)
-        self.uv = Vector(self.parent.i - self.i, self.parent.j - self.j)
+        self.lv = Vector(self.parent.i - self.i, self.parent.j - self.j, inf=-1)
+        self.uv = Vector(self.parent.i - self.i, self.parent.j - self.j, inf=1)
         self.straight = Vector(self.i - self.parent.i, self.j - self.parent.j)
         self.tie = math.inf
 
@@ -49,11 +48,8 @@ def make_path(goal):
     return path[::-1], length
 
 
-def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree):
-    # print("update bounds node ", node.i, node.j)
-    # print("prev", node.prev.i, node.prev.j, "parent", node.parent.i, node.parent.j)
+def updateBounds(node: NodeAP, start_i, start_j, grid_map):
     if node == Point(start_i, start_j):
-        # print("Updated: ", node.i, node.j, "lv: ", node.lv, " uv: ", node.uv )
         return
     
     delta = [[0, 0], [1, 0], [0, 1], [1, 1]]
@@ -85,11 +81,9 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree):
         
         if applyL:
             node.lv = node.straight
-            # print("low vector by cell ", b, "to", node.lv)
         
         if applyU:
             node.uv = node.straight
-            # print("up  vector by cell ", b, "to", node.uv)
     
     sucs = grid_map.get_neighbors(node.i, node.j, k=8)
     for s in sucs:       
@@ -100,45 +94,31 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map, search_tree):
         point_s = Point(s[0], s[1])
         vector_s = Vector(s[0] - node.parent.i, s[1] - node.parent.j)
         if not (tree_s is None) and node.parent == tree_s.parent and tree_s != Point(start_i, start_j):
-            # print("prev bounds", "lv", tree_s.lv, "uv", tree_s.uv)
             if tree_s.lv <= node.straight:
                 if tree_s.lv >= node.lv:
                     node.lv = tree_s.lv
-                # print("low vector by prev ", point_s, "to", node.lv)
-            # else:
-            #     node.lv = node.straight
             if tree_s.uv >= node.straight:
                 node.uv = min(node.uv, tree_s.uv)
                 if tree_s.uv <= node.uv:
                     node.uv = tree_s.uv
-                # print("up  vector by prev ", point_s, "to", node.uv)
-            # else:
-            #     node.uv = node.straight
         if node.parent != point_s and (tree_s is None or node.parent != tree_s.parent) and sqr_dist_n(node.parent, point_s) < sqr_dist_n(node.parent, node):
             if vector_s < node.straight:
                 if vector_s >= node.lv:
                     node.lv = vector_s
-                # print("low vector by point ", point_s, "to", node.lv)
             if vector_s > node.straight:
                 if vector_s <= node.uv:
                     node.uv = vector_s
-                # print("up  vector by point ", point_s, "to", node.uv)
-
-    # print("Updated: ", node.i, node.j, "lv: ", node.lv, " uv: ", node.uv )
-    return
 
 
 def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, search_tree):
-    updateBounds(node, start_i, start_j, grid_map, search_tree)
+    updateBounds(node, start_i, start_j, grid_map)
     sucs = grid_map.get_neighbors(node.i, node.j, k=8)
     point_start = Point(start_i, start_j)
     nodes = []
     for suc in sucs:
         spoint = Point(suc[0], suc[1])
         svector = Vector(suc[0] - node.parent.i, suc[1] - node.parent.j)
-        # print(spoint, " : ", node.lv, svector, node.uv)
         if point_start != spoint and (node.lv <= svector <= node.straight or node.straight <= svector <= node.uv):
-            # print("  visible")
             if sqr_dist_n(spoint, node.parent) <= sqr_dist_n(node, node.parent):
                 continue
             snode = NodeAP(suc[0], suc[1], g=node.parent.g + compute_cost_n(node.parent, spoint),
@@ -146,7 +126,6 @@ def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
             nodes.append(snode)
         else:
-            # print("invisible")
             snode = NodeAP(suc[0], suc[1], g=node.g + compute_cost_n(node, spoint),
             parent=node, prev=node)
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
@@ -172,8 +151,6 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
             break
         
         ast.add_to_closed(curr)
-
-        # print("get", curr, "prev", curr.prev, "parent", curr.parent)
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
