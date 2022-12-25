@@ -1,37 +1,50 @@
-# Для аналитики
+# Any-Angle Pathfinding algorithms (2^k A*, Theta, Anya)
 
-Давайте примем несколько соглашений о сигнатуре функций поиска.  
-1. Функция поиска  ```search_function``` должна принимать на вход следующие параметры:
-```
-def search_function(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None, w = 1, *args, **kwargs);
-```
-w - число, на которое умножается эвристика. С большой вероятностью мы хотим подвигать его в алгоритмах и посмотреть что получится.  
-Важно, что если у вас есть дополнительные аргументы, например k в алгоритме 2^k A*, напишите в комментарии что это за аргументы, чтобы было ясно что туда передавать и как это тестить.  
+## Description
 
-2. Возвращать функция должна тройку: 
-```
-(path_found, last_node, stats)
-```
-Где stats имеет тип Stats, определённый ниже. Помеченные поля алгоритм должен заполнить соответствующей статистикой.  
-Для своих целей после трёх перечисленных значений можно возвращать всё, что угодно. Например, для отрисовки возвращать список раскрытых вершин.  
+A project at St Petersburg University.
 
-```
-# using for counting statistics and returning it as one variable
-class Stats:
-    def __init__(self):
-        self.difficulty = 0
-        self.expansions = 0 # algorithm must set this value
-        self.runtime = 0 # algorithm must set this value
-        self.way_length = 0 # algorithm must set this value
-        self.suboptimal = 0
-        self.max_tree_size = 0 # algorithm must set this value
+We implemented and compared these Any-Angle Pathfinding algorithms:
+- 2^k A*
+    - variation 1
+    - variation 2
+- Theta
+    - variation 1
+    - variation 2
+- Anya
 
+## Demo
+
+- [Visualization of paths found by different algorithms](demo/main_demo.ipynb)
+- [Animation of running Theta](demo/animation_for_theta.ipynb)
+- [Visualization of 2^k A* with expanded nodes](demo/extra_plots_for_2k_astar.ipynb)
+
+## Installation
+
+Clone repository:
+```
+git clone https://github.com/machine-solution/heuristic_search_any_angle
 ```
 
-3. Про карты в movingai:  
-В картах, с которыми имел дело лично я, препятствия обозначаются '@' и 'T', а свободные клетки '.'
+Install requirements:
+```
+python -m pip install -r requirements.txt
+```
 
-# В целом идеи по проекту
+## References
 
-Пишите сюда что-нибудь прикольное, чтобы не забыть. Например:  
-- При обилии времени можно нарисовать свои running examples для алгоритмов.
+[1] Rivera, N., Hernández, C., Hormazábal, N. and Baier, J.A., 2020. [The 2^ k Neighborhoods for Grid Path Planning. Journal of Artificial Intelligence Research, 67, pp.81-113.](https://www.jair.org/index.php/jair/article/view/11383)
+
+[2] Daniel, K., Nash, A., Koenig, S. and Felner, A., 2010. [Theta*: Any-angle path planning on grids. Journal of Artificial Intelligence Research, 39, pp.533-579.](https://www.jair.org/index.php/jair/article/view/10676)
+
+[3] Harabor, D.D., Grastien, A., Öz, D. and Aksakalli, V., 2016. [Optimal any-angle pathfinding in practice. Journal of Artificial Intelligence Research, 56, pp.89-118.](https://www.jair.org/index.php/jair/article/view/11383)
+
+## Mentor
+
+Yakovlev Konstantin Sergeevich
+
+## Us
+
+- Andrey Zaytsev
+- Maria Radionova
+- Ekaterina Tochilina
