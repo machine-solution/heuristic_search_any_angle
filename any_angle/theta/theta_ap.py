@@ -1,12 +1,13 @@
 from datetime import datetime
 import math
 
-from .utils import compute_cost_n, Stats, sqr_dist_n, Vector, Point
+from .utils import compute_cost_n, sqr_dist_n, Vector, Point
 from .theta import Node, make_path
+from ..common.api import Stats
 
 
 class NodeAP(Node):
-    def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, prev = None):
+    def __init__(self, i, j, g=0, h=0, f=None, parent=None, prev=None):
         self.i = i
         self.j = j
         if parent is None:
@@ -34,10 +35,10 @@ class NodeAP(Node):
 
 
 def make_path(goal):
-    '''
+    """
     Creates a path by tracing parent pointers from the goal node to the start node
     It also returns path's length.
-    '''
+    """
     length = goal.g
     current = goal
     path = []
@@ -51,10 +52,10 @@ def make_path(goal):
 def updateBounds(node: NodeAP, start_i, start_j, grid_map):
     if node == Point(start_i, start_j):
         return
-    
+
     delta = [[0, 0], [1, 0], [0, 1], [1, 1]]
     blocked = grid_map.get_blocked_cells(node.i, node.j)
-    
+
     for b in blocked:
         applyL = True
         applyU = True
@@ -66,7 +67,7 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map):
                 locApplyU = True
             if node.straight < vcorner:
                 locApplyU = True
-            if node.straight == vcorner and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
+            if node.straight == vcorner and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node):
                 locApplyU = True
             applyU = applyU and locApplyU
 
@@ -75,10 +76,10 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map):
                 locApplyL = True
             if node.straight > vcorner:
                 locApplyL = True
-            if node.straight == vcorner and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node): 
+            if node.straight == vcorner and sqr_dist_n(node.parent, corner) <= sqr_dist_n(node.parent, node):
                 locApplyL = True
             applyL = applyL and locApplyL
-        
+
         if applyL:
             node.lv = node.straight
         
@@ -86,7 +87,7 @@ def updateBounds(node: NodeAP, start_i, start_j, grid_map):
             node.uv = node.straight
     
     sucs = grid_map.get_neighbors(node.i, node.j, k=8)
-    for s in sucs:       
+    for s in sucs:
         tree_s = None
         if s[0] == node.prev.i and s[1] == node.prev.j:
             tree_s = node.prev
@@ -122,34 +123,34 @@ def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, start_i, start
             if sqr_dist_n(spoint, node.parent) <= sqr_dist_n(node, node.parent):
                 continue
             snode = NodeAP(suc[0], suc[1], g=node.parent.g + compute_cost_n(node.parent, spoint),
-            parent=node.parent, prev=node)
+                           parent=node.parent, prev=node)
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
             nodes.append(snode)
         else:
             snode = NodeAP(suc[0], suc[1], g=node.g + compute_cost_n(node, spoint),
-            parent=node, prev=node)
+                           parent=node, prev=node)
             snode.apply_heuristic(heuristic_func, goal_i, goal_j)
             nodes.append(snode)
     return nodes
 
 
-def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None):
-    start_time = datetime.now() #statistic
-    
-    stats = Stats() # statistic
+def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, search_tree=None):
+    start_time = datetime.now()  # statistic
+
+    stats = Stats()  # statistic
 
     grid_map.add_special_point((goal_i, goal_j))
-    
-    ast = search_tree() 
-    start = NodeAP(start_i, start_j, g=0, parent = None, prev = None)
+
+    ast = search_tree()
+    start = NodeAP(start_i, start_j, g=0, parent=None, prev=None)
     start.apply_heuristic(heuristic_func, goal_i, goal_j)
     ast.add_to_open(start)
-    
+
     while not ast.open_is_empty():
         curr = ast.get_best_node_from_open()
         if curr is None:
             break
-        
+
         ast.add_to_closed(curr)
         
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
@@ -158,15 +159,15 @@ def theta_ap(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func = None, 
             return  (True, curr, stats, ast.OPEN, ast.CLOSED)
         
         # expanding curr
-        stats.expansions += 1 # statistic
+        stats.expansions += 1  # statistic
         successors = getSuccessors(curr, grid_map, goal_i, goal_j, heuristic_func, start_i, start_j, ast)
-        
+
         for node in successors:
             if not ast.was_expanded(node):
                 ast.add_to_open(node)
-                
-        stats.max_tree_size = max(stats.max_tree_size, len(ast)) # statistic
-        
-    stats.runtime = datetime.now() - start_time # statistic
-    stats.way_length = 0 # statistic
-    return (False, None, stats, ast.OPEN, ast.CLOSED)
+
+        stats.max_tree_size = max(stats.max_tree_size, len(ast))  # statistic
+
+    stats.runtime = datetime.now() - start_time  # statistic
+    stats.way_length = 0  # statistic
+    return False, None, stats, ast.OPEN, ast.CLOSED

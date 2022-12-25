@@ -1,8 +1,9 @@
 import time
 
 from ..common.grid import Map
+from ..common.api import Stats
 from .grid import Node
-from .utils import compute_cost, vect_product, scalar_product, Stats
+from .utils import compute_cost, vect_product, scalar_product
 
 
 class Map2K(Map):

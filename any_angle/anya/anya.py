@@ -5,8 +5,9 @@ from heapq import heapify, heappush, heappop
 from collections import defaultdict
 import time
 
-from .utils import euclidean_distance, split_interval_at_corner_points, Stats
+from .utils import euclidean_distance, split_interval_at_corner_points
 from ..common.grid import Map
+from ..common.api import Stats
 
 
 class Node:

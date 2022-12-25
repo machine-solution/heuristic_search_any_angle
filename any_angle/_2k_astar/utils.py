@@ -2,59 +2,6 @@ import numpy as np
 from heapq import heappop, heappush
 
 
-# rectangle (n x m), n >= m > 0
-def simple_intersect_cells(n, m):
-    cells = []
-
-    for i in range(0, n):
-        y = i * m // n
-        x = i
-        cells.append((x, y))
-        if x > 0:
-            cells.append((x - 1, y))
-        if y > 0 and y * n == i * m and y >= 0:
-            cells.append((x, y - 1))
-            if x > 0:
-                cells.append((x - 1, y - 1))
-    return cells
-
-
-def intersect_cells(i1, j1, i2, j2):
-    cells = []
-    start = (i1, j1)
-
-    s1 = 1
-    l1 = 0
-    if i1 > i2:
-        s1 = -1
-        l1 = -1
-        i1, i2 = i2, i1
-
-    s2 = 1
-    l2 = 0
-    if j1 > j2:
-        s2 = -1
-        l2 = -1
-        j1, j2 = j2, j1
-
-    r = 0
-    if j2 - j1 > i2 - i1:
-        r = 1
-        i1, i2, j1, j2 = j1, j2, i1, i2
-        s1, s2 = s2, s1
-        l1, l2 = l2, l1
-
-    n = i2 - i1
-    m = j2 - j1
-    s_cells = simple_intersect_cells(n, m)
-    for cell in s_cells:
-        if r == 1:
-            cells.append((start[0] + cell[1] * s2 + l2, start[1] + cell[0] * s1 + l1))
-        else:
-            cells.append((start[0] + cell[0] * s1 + l1, start[1] + cell[1] * s2 + l2))
-    return cells
-
-
 def vect_product(i1, j1, i2, j2):
     return i1 * j2 - j1 * i2
 
@@ -90,37 +37,6 @@ def h_2k(i1, j1, i2, j2, k):
             l[1] += r[1]
             y -= x
     return x * length(*l) + y * length(*r)
-
-
-class Stats:
-    def __init__(self):
-        self.difficulty = 0
-        self.expansions = 0  # algorithm must set this value
-        self.runtime = 0  # algorithm must set this value
-        self.way_length = 0  # algorithm must set this value
-        self.suboptimal = 0
-        self.max_tree_size = 0  # algorithm must set this value
-
-    def read_from_string(self, data):
-        delimiter = ","
-        diff, expansions, runtime, way_length, suboptimal, tree_size = data.split(delimiter)
-        self.difficulty = int(diff)
-        self.expansions = int(expansions)
-        self.runtime = float(runtime)
-        self.way_length = float(way_length)
-        self.suboptimal = int(suboptimal)
-        self.max_tree_size = int(tree_size)
-
-    def __repr__(self):
-        delimiter = ","
-        return str(self.difficulty) + delimiter + str(self.expansions) + delimiter + str(
-            self.runtime) + delimiter + str(self.way_length) + \
-               delimiter + str(self.suboptimal) + delimiter + str(self.max_tree_size)
-
-    def header(self):
-        delimiter = ","
-        return "difficulty" + delimiter + "expansions" + delimiter + "runtime" + delimiter + "way_length" + \
-               delimiter + "suboptimal" + delimiter + "max_tree_size"
 
 
 class SearchTreePQS:  # SearchTree which uses PriorityQueue for OPEN and set for CLOSED
@@ -169,10 +85,10 @@ class SearchTreePQS:  # SearchTree which uses PriorityQueue for OPEN and set for
 
 
 def make_path(goal):
-    '''
+    """
     Creates a path by tracing parent pointers from the goal node to the start node
     It also returns path's length.
-    '''
+    """
 
     length_ = goal.g
     current = goal

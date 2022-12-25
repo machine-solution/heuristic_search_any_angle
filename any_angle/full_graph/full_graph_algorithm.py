@@ -1,8 +1,9 @@
 import time
 
-from .._2k_astar.utils import compute_cost, Stats
+from .._2k_astar.utils import compute_cost
 from .._2k_astar.grid import Node
 from ..common.grid import Map
+from ..common.api import Stats
 
 
 def gcd(a, b):
