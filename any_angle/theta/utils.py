@@ -1,4 +1,3 @@
-from math import sqrt
 import math
 
 
@@ -51,6 +50,7 @@ class Point:
 
     def __sub__(self, other):
         return Vector(self.i - other.i, self.j- other.j)
+
 
 # comparators for rays
 class Vector:
@@ -147,8 +147,10 @@ def theta_heuristic(node, goal_i, goal_j, wh = 0.1):
 def weighted_heuristic(node, goal_i, goal_j, wh = 0.1):
     return (1 - wh) * euclidian_distance(node, goal_i, goal_j) +  wh * theta_heuristic(node, goal_i, goal_j)
 
+
 def tie_break_heuristic(node, goal_i, goal_j):
-    return (euclidian_distance(node, goal_i, goal_j), theta_heuristic(node, goal_i, goal_j))
+    return euclidian_distance(node, goal_i, goal_j), theta_heuristic(node, goal_i, goal_j)
+
 
 class Stats:
     def __init__(self):
@@ -169,14 +171,12 @@ class Stats:
         self.suboptimal = int(suboptimal)
         self.max_tree_size = int(tree_size)
         
-        
     def __repr__(self):
         delimiter = ","
-        return str(self.difficulty) + delimiter + str(self.expansions) + delimiter + str(self.runtime) + delimiter + str(self.way_length) +\
-        delimiter + str(self.suboptimal)  + delimiter + str(self.max_tree_size)
+        return str(self.difficulty) + delimiter + str(self.expansions) + delimiter + str(self.runtime) + \
+            delimiter + str(self.way_length) + delimiter + str(self.suboptimal) + delimiter + str(self.max_tree_size)
     
     def header(self):
         delimiter = ","
-        return "difficulty" + delimiter + "expansions" + delimiter + "runtime" + delimiter + "way_length" +\
-        delimiter + "suboptimal" + delimiter + "max_tree_size"
-
+        return "difficulty" + delimiter + "expansions" + delimiter + "runtime" + delimiter + \
+            "way_length" + delimiter + "suboptimal" + delimiter + "max_tree_size"

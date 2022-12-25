@@ -1,7 +1,7 @@
 import unittest
 
-from .anya import anya
-from .grid import Map
+from ..anya.anya import anya
+from ..common.grid import Map
 
 
 class Tests(unittest.TestCase):

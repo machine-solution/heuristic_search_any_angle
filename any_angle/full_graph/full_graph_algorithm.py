@@ -1,6 +1,8 @@
-from .utils import compute_cost, Stats
-from .grid import Map, Node
 import time
+
+from .._2k_astar.utils import compute_cost, Stats
+from .._2k_astar.grid import Node
+from ..common.grid import Map
 
 
 def gcd(a, b):

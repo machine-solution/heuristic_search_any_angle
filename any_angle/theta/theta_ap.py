@@ -1,9 +1,9 @@
+from datetime import datetime
+import math
+
 from .utils import compute_cost_n, Stats, sqr_dist_n, Vector, Point
 from .theta import Node, make_path
 
-from datetime import datetime
-from math import pi
-import math
 
 class NodeAP(Node):
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None, prev = None):

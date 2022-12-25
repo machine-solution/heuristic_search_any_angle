@@ -1,8 +1,9 @@
-from .utils import compute_cost, Stats, sqr_dist
-from .grid import Map
-
 from datetime import datetime
 import math
+
+from .utils import compute_cost, Stats, sqr_dist
+from .grid import MapTheta
+
 
 class Node:
     def __init__(self, i, j, g = 0, h = 0, f = None, parent = None):
@@ -27,7 +28,6 @@ class Node:
             self.h = h
         self.f = self.g + self.h
 
-    
     def __eq__(self, other):
         '''
         Estimating where the two search nodes are the same,
@@ -105,9 +105,9 @@ def getSuccessors(node, grid_map, goal_i, goal_j, heuristic_func, w, p, k):
     return successors
 
 
-def theta(grid_map: Map, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None, w = 1, p = 1, k = 8):
+def theta(grid_map: MapTheta, start_i, start_j, goal_i, goal_j, heuristic_func = None, search_tree = None, w = 1, p = 1, k = 8):
     
-    start_time = datetime.now() #statistic
+    start_time = datetime.now() # statistic
     
     stats = Stats() # statistic
     
@@ -130,7 +130,7 @@ def theta(grid_map: Map, start_i, start_j, goal_i, goal_j, heuristic_func = None
         if (curr.i == goal_i) and (curr.j == goal_j): # curr is goal
             stats.runtime = datetime.now() - start_time # statistic
             stats.way_length = make_path(curr)[1] # statistic
-            return  (True, curr, stats, ast.OPEN, ast.CLOSED)
+            return True, curr, stats, ast.OPEN, ast.CLOSED
         
         # expanding curr
         stats.expansions += 1 # statistic
@@ -143,4 +143,4 @@ def theta(grid_map: Map, start_i, start_j, goal_i, goal_j, heuristic_func = None
         
     stats.runtime = datetime.now() - start_time # statistic
     stats.way_length = 0 # statistic
-    return (False, None, stats, ast.OPEN, ast.CLOSED)
+    return False, None, stats, ast.OPEN, ast.CLOSED

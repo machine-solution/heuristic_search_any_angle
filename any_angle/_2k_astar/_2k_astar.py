@@ -1,18 +1,20 @@
 import time
-from .grid import Map, Node
+
+from ..common.grid import Map
+from .grid import Node
 from .utils import compute_cost, vect_product, scalar_product, Stats
 
 
-class Map_2k(Map):
+class Map2K(Map):
     def set_k(self, k):
         self._delta = []
         self._k = k
         self._make_delta()
 
     def _make_delta(self):
-        '''
+        """
         Generate all directions in clockwise order, starting with (-1, 0).
-        '''
+        """
         delta = [(-1, 0), (0, 1)]
         for _ in range(self._k - 2):
             new_delta = []
@@ -58,10 +60,10 @@ class Map_2k(Map):
         return neighbors
 
     def get_forced_neighbors(self, i, j, number_of_prev_move=None):
-        '''
+        """
         Can intersect with natural neighbors by no more then one
         direction but that is doesn't affect algorithm's correctness.
-        '''
+        """
         if number_of_prev_move is None:
             return []
 

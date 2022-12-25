@@ -1,11 +1,13 @@
 import typing as tp
 
+from .utils import intersect_cells, intersect_points, vect_product
+
 
 class Map:
     def __init__(self):
-        '''
+        """
         Default constructor
-        '''
+        """
 
         self._width = 0
         self._height = 0
@@ -90,30 +92,28 @@ class Map:
             return True
         return False
 
-# start of copy-paste of Andrey's grid methods
-
     def cell_in_bounds(self, i, j):
-        '''
+        """
         Check if the cell is on a grid.
-        '''
+        """
         return (0 <= j < self._width) and (0 <= i < self._height)
 
     def point_in_bounds(self, i, j):
-        '''
+        """
         Check if the cell is on a grid.
-        '''
+        """
         return (0 <= j <= self._width) and (0 <= i <= self._height)
 
     def traversable(self, i, j):
-        '''
+        """
         Check if the cell is not an obstacle.
-        '''
+        """
         return self.cell_in_bounds(i, j) and (not self._cells[i][j])
 
     def not_traversable(self, i, j):
-        '''
+        """
         Check if the cell is not an obstacle.
-        '''
+        """
         return self.cell_in_bounds(i, j) and (self._cells[i][j])
 
     def passable_point(self, i, j):
@@ -137,29 +137,6 @@ class Map:
             if self.not_traversable(i + d[0], j + d[1]):
                 cells.append((i + d[0], j + d[1]))
         return cells
-
-    def get_neighbors(self, i, j, k=8):
-        '''
-        Get a list of neighbouring cells as (i,j) tuples.
-        It's assumed that grid is 8-connected and we can't cut angles
-        '''
-        neighbors = []
-        if k == 4:
-            delta = [[0, 1], [1, 0], [0, -1], [-1, 0]]
-        if k == 8:
-            delta = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]]
-        if k == 16:
-            delta = [[0, 1], [1, 0], [0, -1], [-1, 0],
-                     [1, 1], [-1, -1], [1, -1], [-1, 1],
-                     [1, 2], [-1, -2], [1, -2], [-1, 2],
-                     [2, 1], [-2, -1], [2, -1], [-2, 1]]
-
-        for d in delta:
-            if self.stayable_point(i + d[0], j + d[1]):
-                if self.visible(i, j, i + d[0], j + d[1]):
-                    neighbors.append((i + d[0], j + d[1]))
-
-        return neighbors
 
     def visible_axes(self, i1, j1, i2, j2):
         if i1 == i2:
@@ -200,83 +177,93 @@ class Map:
 
         return True
 
+    def node_in_bounds(self, i, j):
+        """
+        Check if the node is on a grid.
+        """
+        return (0 <= j <= self._width) and (0 <= i <= self._height)
 
-# rectangle (n x m), n >= m > 0
-def simple_intersect_cells(n, m):
-    cells = []
+    def neighbor_cells(self, i, j):
+        """
+        Returns top left coordinates of all neighboring cells
+        (some of them may not belong to the map or may not be traversable).
 
-    for x in range(0, n):
-        y = x * m // n
-        cells.append((x, y))
-        if y * n == x * m:
-            continue
-        if x > 0:
-            cells.append((x - 1, y))
-        # if y * n == x * m:
-        #     cells.append((x, y - 1))
-        #     if x > 0:
-        #         cells.append((x - 1, y - 1))
-    return cells
+        Order is clockwise, starting with a (i - 1, j).
+        """
+        res = []
+        for delta_i, delta_j in [(-1, 0), (0, 0), (0, -1), (-1, -1)]:
+            res.append((i + delta_i, j + delta_j))
+        return res
 
+    def nodes_of_cell(self, i, j):
+        """
+        Returns all nodes of cell with top left corner (i, j). Order is clockwise, starting with a (i, j).
+        """
+        res = []
+        for delta_i, delta_j in [(0, 0), (0, 1), (1, 1), (1, 0)]:
+            res.append((i + delta_i, j + delta_j))
+        return res
 
-def intersect_cells(i1, j1, i2, j2):
-    cells = []
-    start = (i1, j1)
+    def neighbor_obstacles(self, i, j):
+        """
+        Looks to all cells around the node (i, j) and returns a list with
+        flags set to the obstacles.
 
-    s1 = 1
-    l1 = 0
-    if i1 > i2:
-        s1 = -1
-        l1 = -1
-        i1, i2 = i2, i1
+        Order of cells is clockwise, starting with a cell with top left corner (i - 1, j).
 
-    s2 = 1
-    l2 = 0
-    if j1 > j2:
-        s2 = -1
-        l2 = -1
-        j1, j2 = j2, j1
+        If cell is not on the map, then we interpret it as an obstacle.
+        """
+        is_obst = []
+        for cell in self.neighbor_cells(i, j):
+            is_obst.append((not self.cell_in_bounds(*cell)) or (not self.traversable(*cell)))
+        return is_obst
 
-    r = 0
-    if j2 - j1 > i2 - i1:
-        r = 1
-        i1, i2, j1, j2 = j1, j2, i1, i2
-        s1, s2 = s2, s1
-        l1, l2 = l2, l1
+    def diagonal_obstacles(self, i, j):
+        """
+        Returns True if there are diagonal obstacles around node (i, j). False otherwise.
+        """
+        is_obst = self.neighbor_obstacles(i, j)
+        return is_obst[0] and is_obst[2] or is_obst[1] and is_obst[3]
 
-    n = i2 - i1
-    m = j2 - j1
-    s_cells = simple_intersect_cells(n, m)
-    for cell in s_cells:
-        if r == 1:
-            cells.append((start[0] + cell[1] * s2 + l2, start[1] + cell[0] * s1 + l1))
-        else:
-            cells.append((start[0] + cell[0] * s1 + l1, start[1] + cell[1] * s2 + l2))
-    return cells
+    def ortogonal_move_is_correct(self, i1, j1, i2, j2):
+        """
+        Checks if ortogonal move from (i1, j1) to (i2, j2) is correct.
 
+        (i1, j1) should be the node on the map.
+        """
+        move = (i2 - i1, j2 - j1)
+        ortogonal_moves = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        nodes_to_check = self.neighbor_cells(i1, j1)
+        node1, node2 = None, None
+        for i in range(4):
+            if ortogonal_moves[i] == move:
+                node1 = nodes_to_check[i]
+                node2 = nodes_to_check[(i + 1) % 4]
+                break
+        return (self.cell_in_bounds(*node1) and self.traversable(*node1)) or (
+                self.cell_in_bounds(*node2) and self.traversable(*node2))
 
-def gcd(a, b):
-    a = abs(a)
-    b = abs(b)
-    while (b > 0):
-        a %= b
-        a, b = b, a
-    return a
+    def move_is_correct(self, i1, j1, i2, j2):
+        """
+        Checks if move from (i1, j1) to (i2, j2) is correct.
 
+        (i1, j1) should be the node on the map.
+        """
+        if not self.node_in_bounds(i2, j2):
+            return False
 
-def intersect_points(i1, j1, i2, j2):
-    g = gcd(i2 - i1, j2 - j1)
-    if g == 0:
-        return []
-    dx = (i2 - i1) // g
-    dy = (j2 - j1) // g
-    points = []
-    i1 += dx
-    j1 += dy
-    while i1 != i2:
-        points.append((i1, j1))
-        i1 += dx
-        j1 += dy
-    return points
+        if abs(i2 - i1) + abs(j2 - j1) == 1:
+            return self.ortogonal_move_is_correct(i1, j1, i2, j2)
 
-# end of copy-paste of Andrey's grid methods
+        for cell in intersect_cells(i1, j1, i2, j2):
+            cell = (cell[0], cell[1])
+            if not self.cell_in_bounds(*cell) or self.traversable(*cell):
+                continue
+            vect_prod_signs = set()
+            for node in self.nodes_of_cell(*cell):
+                vp = vect_product(node[0] - i1, node[1] - j1, i2 - i1, j2 - j1)
+                vect_prod_signs.add(1 if vp > 0 else
+                                    -1 if vp < 0 else 0)
+            if (1 in vect_prod_signs) and (-1 in vect_prod_signs):
+                return False
+        return True

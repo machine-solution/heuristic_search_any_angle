@@ -1,6 +1,7 @@
 from heapq import heappop, heappush
 
-class SearchTreePQS: #SearchTree which uses PriorityQueue for OPEN and set for CLOSED
+
+class SearchTreePQS: # SearchTree which uses PriorityQueue for OPEN and set for CLOSED
     
     def __init__(self):
         self._open = [] # priority queue (node.priority, node)
@@ -37,7 +38,7 @@ class SearchTreePQS: #SearchTree which uses PriorityQueue for OPEN and set for C
         return self._closed
 
 
-class SearchTreePQS_SDD(SearchTreePQS): #SearchTree which uses PriorityQueue for OPEN and set for CLOSED with semi-detection duplicates
+class SearchTreePQS_SDD(SearchTreePQS): # SearchTree which uses PriorityQueue for OPEN and set for CLOSED with semi-detection duplicates
 
     def __init__(self):
         self._open = [] # priority queue (node.priority, node)
@@ -57,7 +58,7 @@ class SearchTreePQS_SDD(SearchTreePQS): #SearchTree which uses PriorityQueue for
         self._best[item] = -1 # we can't add it to open anymore
 
 
-class SearchTreePQSReexp: #SearchTree with reexpansion which uses PriorityQueue for OPEN and set for CLOSED
+class SearchTreePQSReexp: # SearchTree with reexpansion which uses PriorityQueue for OPEN and set for CLOSED
     
     def __init__(self):
         self._open = [] # priority queue (node.priority, node)
