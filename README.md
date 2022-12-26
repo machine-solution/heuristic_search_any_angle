@@ -22,7 +22,7 @@ We implemented and compared these Any-Angle Pathfinding algorithms:
 
 ## Algorithm comparison
 
-All data is stored in folder [analysis](analysis). There you can find maps, results and graphics.
+All data is stored in folder `analysis`. There you can find maps, results and graphics.
 
 [Description of results](results.md)
 
