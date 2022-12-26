@@ -1,6 +1,6 @@
 import time
 
-from .._2k_astar.utils import compute_cost
+from .._2k_astar.utils import compute_cost, make_path
 from .._2k_astar.grid import Node
 from ..common.grid import Map
 from ..common.api import Stats
@@ -71,5 +71,7 @@ def full_graph_astar(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=
         goal_node = None
     else:
         stats.way_length = goal_node.g
+        stats.path_found = True
+        stats.path = [(x.i, x.j) for x in make_path(goal_node)[0]]
     stats.runtime = time.time() - stats.runtime
     return path_found, goal_node, stats, ast.OPEN, ast.CLOSED
