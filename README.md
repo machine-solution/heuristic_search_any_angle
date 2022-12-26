@@ -26,7 +26,7 @@ We run algorithms on maps ... (links, names)
 
 All data is stored in folder [analysis](analysis).
 
-[Notebook with analytics](https://github.com/machine-solution/heuristic_search_any_angle/blob/restructure/graphics.ipynb)
+[Study results](results.md)
 
 ## Installation
 
