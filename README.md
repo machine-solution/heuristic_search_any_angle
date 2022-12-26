@@ -5,9 +5,9 @@
 A project at St Petersburg University.
 
 We implemented and compared these Any-Angle Pathfinding algorithms:
-- 2^k A*
-    - variation 1
-    - variation 2
+- 2^k A\*
+    - regular 2^k A\* with euclidian and $h_{2^k}$ heuristics;
+    - canonical 2^k A\* with euclidian and $h_{2^k}$ heuristics;
 - Theta
     - variation 1
     - variation 2
