@@ -33,7 +33,7 @@ class Stats:
         self.way_length = 0  # algorithm must set this value
         self.suboptimal = 0
         self.max_tree_size = 0  # algorithm must set this value
-        self.path: tp.List[tp.Tuple[int, int]] = []  # algorithm should set this value
+        self.path: tp.List[tp.Tuple[int, int]] = []  # algorithm must set this value
 
     def read_from_string(self, data):
         delimiter = ","

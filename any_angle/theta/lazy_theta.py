@@ -83,7 +83,9 @@ def lazy_theta(grid_map, start_i, start_j, goal_i, goal_j, heuristic_func=None, 
 
         if (curr.i == goal_i) and (curr.j == goal_j):  # curr is goal
             stats.runtime = datetime.now() - start_time  # statistic
-            stats.way_length = make_path(curr)[1]  # statistic
+            path, stats.way_length = make_path(curr)  # statistic
+            stats.path_found = True
+            stats.path = [(x.i, x.j) for x in path]
             return True, curr, stats, ast.OPEN, ast.CLOSED
 
         # expanding curr
