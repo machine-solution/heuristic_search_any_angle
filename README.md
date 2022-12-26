@@ -33,12 +33,35 @@ All data is stored in folder [analysis](analysis).
 Clone repository:
 ```
 git clone https://github.com/machine-solution/heuristic_search_any_angle
+cd heuristic_search_any_angle
 ```
 
 Install requirements:
 ```
 python -m pip install -r requirements.txt
 ```
+
+Please make sure you have Jupyter Notebook installed (or something else to open .ipynb files).
+
+You can do it with pip:
+```
+python -m pip install notebook
+```
+
+And then you can start it like that:
+```
+python -m notebook
+```
+
+## Getting started
+
+The main entrance point is IPython notebook `demo/main_demo.ipynb`.
+
+There you can try different maps and get visualization of paths that were found by different algorithms.
+
+API of the algorithms can be found in files `any_angle/[algorithm]/api.py`, where `algorithm` can be `_2k_astar`, `theta`, `anya` or `full_graph` (the last is a brute-force algorithm used for testing).
+
+Abstract API is described in `any_angle/common/api.py`.
 
 ## References
 

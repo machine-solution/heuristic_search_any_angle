@@ -14,4 +14,4 @@ class FullGraph(Algorithm[MapFullGraph]):
 
     @staticmethod
     def compute_path_from_map(map_: MapFullGraph, start: tp.Tuple[int, int], end: tp.Tuple[int, int]) -> Stats:
-        return full_graph_astar(map_, *start, *end, euclidian_distance, SearchTreePQS)
+        return full_graph_astar(map_, *start, *end, euclidian_distance, SearchTreePQS)[2]
