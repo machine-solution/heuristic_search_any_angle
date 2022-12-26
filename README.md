@@ -9,8 +9,9 @@ We implemented and compared these Any-Angle Pathfinding algorithms:
     - regular 2^k A\* with euclidian and $h_{2^k}$ heuristics;
     - canonical 2^k A\* with euclidian and $h_{2^k}$ heuristics;
 - Theta
-    - variation 1
-    - variation 2
+    - Basic Theta
+    - Lazy Theta
+    - Theta Angle Propagation
 - Anya
 
 ## Demo
